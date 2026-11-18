@@ -158,6 +158,8 @@ ul.gaps{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:
         <label for="cTile">Màu ô chỉ số <input type="color" id="cTile" value="#FFFFFF"></label>
         <label for="cAc">Màu nhấn <input type="color" id="cAc" value="#0B6B5D"></label>
         <button class="btn" id="cReset">Về mặc định</button>
+        <button class="btn primary" id="cSave" style="display:none">Áp dụng cho tất cả link khách</button>
+        <div class="sub" id="cNote" style="display:none">Màu và font đang chọn sẽ thành giao diện mặc định khi khách mở link.</div>
       </div>
     </div>
   </div>
@@ -490,10 +492,13 @@ $('chart').addEventListener('mousemove',e=>{const t=e.target.dataset&&e.target.d
 $('chart').addEventListener('mouseleave',()=>tip.style.display='none');
 
 // ---- tùy chỉnh giao diện
-const R=document.documentElement,KEY='ncc-report-ui';
+// Giao diện mặc định do Kho vận chọn (window.THEME, lưu ở Apps Script); khách chỉnh thì chỉ lưu trên máy khách
+const R=document.documentElement,KEY='ncc-report-ui2';
+const THEME=(window.THEME&&typeof window.THEME==='object')?window.THEME:{};
+let own={};  // phần khách tự chỉnh trên máy mình
 const lum=h=>{const n=parseInt(h.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)};
 let ui={};
-function applyUI(){
+function applyUI(save){
   ['--font','--fs','--bg','--ink','--accent','--on-accent','--card','--card-ink','--tile','--tile-ink'].forEach(p=>R.style.removeProperty(p));R.style.colorScheme='';
   if(ui.font)R.style.setProperty('--font',ui.font);
   if(ui.size)R.style.setProperty('--fs',ui.size+'px');
@@ -507,19 +512,33 @@ function applyUI(){
   $('cBg').value=ui.bg||hex(cs.getPropertyValue('--bg'))||'#F2F5F3';$('cAc').value=ui.ac||hex(cs.getPropertyValue('--accent'))||'#0B6B5D';
   $('cCard').value=ui.card||cssHex('var(--card)')||'#FFFFFF';
   $('cTile').value=ui.tile||cssHex('var(--card)')||'#FFFFFF';
-  try{localStorage.setItem(KEY,JSON.stringify(ui))}catch(e){}
+  if(save){try{localStorage.setItem(KEY,JSON.stringify(own))}catch(e){}}
 }
+function setUI(k,v){own[k]=v;ui=Object.assign({},THEME,own);applyUI(true)}
 function cssHex(v){try{const p=document.createElement('i');p.style.cssText='position:absolute;visibility:hidden;background:'+v;document.body.appendChild(p);const c=getComputedStyle(p).backgroundColor;p.remove();
   const x=document.createElement('canvas').getContext('2d');x.canvas.width=x.canvas.height=1;x.fillStyle=c;x.fillRect(0,0,1,1);const d=x.getImageData(0,0,1,1).data;return'#'+[d[0],d[1],d[2]].map(n=>n.toString(16).padStart(2,'0')).join('')}catch(e){return null}}
-try{ui=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){ui={}}
+try{own=JSON.parse(localStorage.getItem(KEY)||(MULTI?localStorage.getItem('ncc-report-ui'):'')||'{}')||{}}catch(e){own={}}  // link nội bộ: giữ màu anh đã chỉnh trước đây
+ui=Object.assign({},THEME,own);
 $('custBtn').addEventListener('click',()=>{const o=$('pop').classList.toggle('open');$('custBtn').setAttribute('aria-expanded',o)});
-$('cFont').addEventListener('change',e=>{ui.font=e.target.value;applyUI()});
-$('cSize').addEventListener('input',e=>{ui.size=+e.target.value;applyUI()});
-$('cBg').addEventListener('input',e=>{ui.bg=e.target.value;applyUI()});
-$('cAc').addEventListener('input',e=>{ui.ac=e.target.value;applyUI()});
-$('cTile').addEventListener('input',e=>{ui.tile=e.target.value;applyUI()});
-$('cCard').addEventListener('input',e=>{ui.card=e.target.value;applyUI()});
-$('cReset').addEventListener('click',()=>{ui={};applyUI()});
+$('cFont').addEventListener('change',e=>setUI('font',e.target.value));
+$('cSize').addEventListener('input',e=>setUI('size',+e.target.value));
+$('cBg').addEventListener('input',e=>setUI('bg',e.target.value));
+$('cAc').addEventListener('input',e=>setUI('ac',e.target.value));
+$('cTile').addEventListener('input',e=>setUI('tile',e.target.value));
+$('cCard').addEventListener('input',e=>setUI('card',e.target.value));
+// Về mặc định: bỏ phần tự chỉnh, quay về giao diện Kho vận đã chọn
+$('cReset').addEventListener('click',()=>{own={};ui=Object.assign({},THEME);applyUI(true)});
+// Chỉ link Tất cả NCC (nội bộ) mới có nút lưu giao diện cho khách
+if(MULTI&&window.API&&window.TOKEN){$('cSave').style.display='';$('cNote').style.display='';
+  $('cSave').addEventListener('click',()=>{
+    const t={};['font','size','bg','ac','tile','card'].forEach(k=>{if(ui[k]!=null&&ui[k]!=='')t[k]=ui[k]});
+    $('cSave').disabled=true;toast('Đang lưu giao diện…');
+    fetch(window.API+'?api=1&k='+encodeURIComponent(window.TOKEN)+'&theme='+encodeURIComponent(JSON.stringify(t)))
+      .then(r=>r.json()).then(d=>{$('cSave').disabled=false;
+        if(d&&d.ok){toast('Đã áp dụng. Khách tải lại trang sẽ thấy giao diện này.');own={};try{localStorage.setItem(KEY,'{}')}catch(e){}}
+        else toast('Không lưu được: '+((d&&d.error)||'lỗi không rõ'))})
+      .catch(()=>{$('cSave').disabled=false;toast('Không lưu được. Kiểm tra mạng rồi thử lại.')});
+  });}
 applyUI();render();
 }
 (function(){
@@ -527,6 +546,7 @@ applyUI();render();
   var L=document.getElementById('load');
   var k=new URLSearchParams(location.search).get('k')||'';
   if(!k){L.textContent='Link thiếu mã báo cáo. Vui lòng liên hệ Kho vận HCM.';return}
+  window.API=API;window.TOKEN=k;
   fetch(API+'?api=1&k='+encodeURIComponent(k)).then(function(r){return r.json()}).then(function(D){
     if(D.error){L.textContent=D.error;return}
     if(!D.ROWS||!D.ROWS.length){L.textContent='Chưa có dữ liệu cho NCC này.';return}
