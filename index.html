@@ -181,7 +181,7 @@ ul.gaps{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:
     <div id="trk"><a class="btn primary" href="https://logisticpartner.thegioididong.com/TraCuu?Bill" target="_blank" rel="noopener">Tra cứu thông tin vận đơn ↗</a></div>
     <div id="dTab" style="display:flex;flex-direction:column;gap:8px"></div></section>
 
-  <div class="sub">Quy ước: bộ đếm tính theo mã PO, dòng chưa có mã PO không tính vào số PO. 1 chứng từ = 1 mã bill. Kỳ báo cáo lọc theo ngày NCC booking. PO tính đã giao khi có chứng từ ở trạng thái "5 - Hoàn tất giao hàng".<span id="lateNote"> Giao trễ = ngày hoàn tất giao của bill cuối cùng thuộc PO trừ hạn PO; lớn hơn 0 là trễ.</span></div>
+  <div class="sub">Quy ước: bộ đếm tính theo mã PO, dòng chưa có mã PO không tính vào số PO. 1 chứng từ = 1 mã bill. Kỳ báo cáo lọc theo ngày NCC booking. PO tính đã giao khi có chứng từ ở trạng thái "5 - Hoàn tất giao hàng" hoặc "FBC - Đã Trả Hàng".<span id="lateNote"> Giao trễ = ngày hoàn tất giao của bill cuối cùng thuộc PO trừ hạn PO; lớn hơn 0 là trễ.</span></div>
 </div>
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast"></div>
@@ -196,7 +196,7 @@ const fd=d=>d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).pad
 const TRACK='https:\/\/logisticpartner.thegioididong.com/TraCuu?Bill';
 if(window.NCCS.length>1){document.getElementById('kpis').classList.add('six');document.getElementById('trk').remove()}else document.getElementById('lateNote').remove();
 const DICT=window.DICT,BILLS=window.BILLS,NCCS=window.NCCS,MULTI=NCCS.length>1,NA='Chưa có dữ liệu';
-document.title=MULTI?'Report tất cả NCC':'Report NCC '+NCC;$('h1').textContent=MULTI?'Báo cáo đơn hàng tất cả NCC':'Báo cáo đơn hàng NCC '+NCC;$('snap').textContent='Dữ liệu cập nhật lúc '+window.SNAP+' · Data làm mới tự động lúc 0h hằng ngày';
+document.title=MULTI?'Report tất cả NCC':'Report NCC '+NCC;$('h1').textContent=MULTI?'Báo cáo đơn hàng tất cả NCC':'Báo cáo đơn hàng NCC '+NCC;$('snap').textContent='Dữ liệu cập nhật lúc '+window.SNAP+' · Data cập nhật tự động lúc 8:00 hằng ngày';
 
 // ---- đọc dữ liệu: [booking, lấy hàng, PO, hạn PO, bill, địa chỉ, cột I, KTT, tỉnh]
 const LINES=window.ROWS.map(r=>({b:mk(r[0]),p:mk(r[1]),po:r[2],han:r[3],bill:r[4],addr:DICT[r[5]],I:r[6],ktt:r[7]<0?'':DICT[r[7]],prov:r[8]<0?'':DICT[r[8]],ncc:NCCS[r[9]],kho:r[10]<0?'':DICT[r[10]]}));
@@ -225,16 +225,18 @@ function periodLabel(){
 // ---- quy tắc: giao hàng theo Sheet 3 (cột AH, AI), trả bill theo cột I Sheet 2
 const deliv=b=>(BILLS[b]&&BILLS[b][1])||'';
 const stat=b=>b?((BILLS[b]&&BILLS[b][0])||NA):'';
-const delivTxt=b=>b?(deliv(b)||(BILLS[b]&&BILLS[b][0]?'CHƯA HOÀN TẤT':NA)):'';
+const isCancel=s=>/^(Huỷ|Hủy)/i.test(s||'');
+const delivTxt=b=>b?(deliv(b)||(BILLS[b]&&BILLS[b][0]?(isCancel(BILLS[b][0])?'Huỷ không giao':'CHƯA HOÀN TẤT'):NA)):'';
 const ret=b=>(BILLS[b]&&BILLS[b][2])||'';
 const retTxt=v=>v?'Đã hoàn tất':'Chưa hoàn tất';
 // Rule B.10: NCC không có rule trả chứng từ thì không báo cáo phần trả chứng từ
 const NORET=new Set(window.NORET||[]),hasRet=n=>!NORET.has(n),RETANY=NCCS.some(hasRet),NOAP='Không áp dụng';
 const retOf=(n,v)=>hasRet(n)?retTxt(v):NOAP;
 if(!RETANY){$('kpis').classList.add('four');$('fRet').style.display='none'}
-const SG={done:'Hoàn tất giao hàng',way:'Đang giao hàng',ret:'Hoàn bill',na:'Chưa có dữ liệu'};
-const sgrp=b=>{if(!b)return'na';if(deliv(b))return'done';const s=(BILLS[b]&&BILLS[b][0])||'';return /^6/.test(s)?'ret':/^5/.test(s)?'done':s?'way':'na'};
-const lgrp=r=>{const g=sgrp(r.bill);return g==='done'||g==='ret'?g:'und'};
+const SG={done:'Hoàn tất giao hàng',way:'Đang giao hàng',ret:'Hoàn bill',cancel:'Huỷ không giao',na:'Chưa có dữ liệu'};
+const sgrp=b=>{if(!b)return'na';if(deliv(b))return'done';const s=(BILLS[b]&&BILLS[b][0])||'';return /^6/.test(s)?'ret':/^5|^FBC/i.test(s)?'done':isCancel(s)?'cancel':s?'way':'na'};
+// Rule 9.2: "5 - Hoàn tất giao hàng" và "FBC - Đã Trả Hàng" tính là đã giao; "Huỷ" xếp chung mục hoàn bill/huỷ
+const lgrp=r=>{const g=sgrp(r.bill);return g==='done'?g:g==='ret'||g==='cancel'?'ret':'und'};
 const LATE=['Giao trễ','Đúng hạn','Chưa giao, đã quá hạn','Chưa giao, còn hạn','Không xác định'];
 
 // ---- tổng hợp
@@ -290,14 +292,14 @@ C.det=[['STT',r=>r.stt,1]].concat(MULTI?[['Tên NCC',r=>r.ncc]]:[],[['Mã PO',r=
 C.late=(MULTI?[['Tên NCC',o=>o.ncc]]:[]).concat([['Mã PO',o=>o.po||'(chưa có PO)'],['Hạn PO',o=>o.han],['Ngày giao hàng',o=>fd(o.last)],['Số ngày trễ (âm là sớm hạn)',o=>o.ldays,1],
   ['Kết quả',o=>o.lres,3],['Bill giao hàng',o=>[...o.bills].join(', ')],['Kho nhận',o=>o.kho],['Ngày booking',o=>fd(o.b)]]);
 if(!RETANY)['bill','line','det'].forEach(k=>{C[k]=C[k].filter(c=>c[0]!=='Tình trạng trả chứng từ'&&c[0]!=='Data trả bill NCC')});
-const DSEC=[['done','Đơn hàng đã giao','Don_da_giao'],['und','Đơn hàng chưa giao','Don_chua_giao'],['ret','Đơn hàng hoàn bill','Don_hoan_bill']];
+const DSEC=[['done','Đơn hàng đã giao','Don_da_giao'],['und','Đơn hàng chưa giao','Don_chua_giao'],['ret','Đơn hàng hoàn bill / huỷ không giao','Don_hoan_bill_huy']];
 function detRows(g){
   const qp=$('qpo').value.trim().toLowerCase(),q=$('q').value.trim().toLowerCase(),f=$('fRet').value;
   return D.L.filter(r=>{if(lgrp(r)!==g)return false;const v=!!(r.bill?ret(r.bill):r.I);if(f==='1'&&!v)return false;if(f==='0'&&v)return false;
     if(qp&&!(r.po||'').toLowerCase().includes(qp))return false;
     return !q||[r.bill,r.kho,r.ncc,r.han,stat(r.bill)].some(x=>x&&x.toLowerCase().includes(q))}).map((r,i)=>Object.assign({stt:i+1},r));
 }
-const SPILL={done:'good',way:'warn',ret:'warn',na:'cnt'};
+const SPILL={done:'good',way:'warn',ret:'warn',cancel:'warn',na:'cnt'};
 function poCard(o){
   const late=o.lres===LATE[0]?`Giao trễ ${o.ldays} ngày`:o.lres===LATE[2]?`Chưa giao, quá hạn ${o.ldays} ngày`:o.lres;
   const docs=[...o.bills].map(b=>{const g=sgrp(b);return`<div class="doc"><div class="eyebrow">Chứng từ vận chuyển</div><div class="docno">${esc(b)}</div>
@@ -334,7 +336,7 @@ function panels(D){
   return[
     {t:'PO đã booking',f:'Booking',tabs:[['Theo ngày booking',C.day,byDay(D)],['Chi tiết PO',C.order,D.O],['Chi tiết dòng hàng',C.line,D.L]]},
     {t:'PO đã nhận',f:'Da-nhan',tabs:[['Đã nhận',C.order.concat([C.wait]),rec],['Chưa nhận',C.order,nrec]]},
-    {t:'PO đã giao',f:'Da-giao',tabs:[['Đã giao',C.order.concat([C.odeliv]),dl,'Chưa có PO nào ở trạng thái "5 - Hoàn tất giao hàng" trong kỳ.'],['Chưa có xác nhận giao',C.order,ndl]]},
+    {t:'PO đã giao',f:'Da-giao',tabs:[['Đã giao',C.order.concat([C.odeliv]),dl,'Chưa có PO nào đã hoàn tất giao trong kỳ.'],['Chưa có xác nhận giao',C.order,ndl]]},
     {t:'Tổng chứng từ',f:'Chung-tu',tabs:[['Tất cả chứng từ',C.bill,D.B]]},
   ].concat(RETANY?[{t:'Chứng từ trả NCC',f:'Tra-bill',tabs:[['Đã trả NCC',C.bill,rt,'Chưa có chứng từ nào có data ở cột I Sheet 2 trong kỳ.'],['Chưa trả NCC',C.bill,nrt]]}]:[],MULTI?[{t:'Giao trễ so với hạn PO',f:'Giao-tre',tabs:LATE.map(k=>[k,C.late,D.O.filter(o=>o.lres===k)])}]:[]);
 }
@@ -401,8 +403,8 @@ function renderChart(){
   $('chart').innerHTML=D.O.length?s+'</svg>':'<div class="empty">Không có PO booking trong kỳ.</div>';
 }
 function renderProv(){
-  const c={done:0,way:0,ret:0,na:0};D.B.forEach(d=>c[sgrp(d.bill)]++);
-  const keys=['done','way','ret'].concat(c.na?['na']:[]),mx=Math.max(1,...keys.map(k=>c[k]));
+  const c={done:0,way:0,ret:0,cancel:0,na:0};D.B.forEach(d=>c[sgrp(d.bill)]++);
+  const keys=['done','way','ret'].concat(c.cancel?['cancel']:[],c.na?['na']:[]),mx=Math.max(1,...keys.map(k=>c[k]));
   $('prov').innerHTML=keys.map(k=>`<button class="prow" data-s="${k}" aria-expanded="${state.sopen===k}"><span>${SG[k]}</span><span class="ptrack"><i style="width:${c[k]/mx*100}%"></i></span><b>${c[k]}</b></button>`).join('');
   const el=$('sPanel');if(!state.sopen||keys.indexOf(state.sopen)<0){el.classList.remove('open');el.innerHTML='';return}
   const rows=D.B.filter(d=>sgrp(d.bill)===state.sopen);window._SR=rows;
