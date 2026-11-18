@@ -159,6 +159,9 @@ ul.gaps{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:
         <label for="cCard">Màu khung dữ liệu <input type="color" id="cCard" value="#FFFFFF"></label>
         <label for="cTile">Màu ô chỉ số <input type="color" id="cTile" value="#FFFFFF"></label>
         <label for="cAc">Màu nhấn <input type="color" id="cAc" value="#0B6B5D"></label>
+        <label for="cC1">Biểu đồ: cột Đã giao <input type="color" id="cC1" value="#0B6B5D"></label>
+        <label for="cC2">Biểu đồ: cột Chưa giao <input type="color" id="cC2" value="#E3A23A"></label>
+        <label for="cBand">Biểu đồ: nền xen kẽ ngày <input type="color" id="cBand" value="#D9DEDB"></label>
         <button class="btn" id="cReset">Về mặc định</button>
         <button class="btn primary" id="cSave" style="display:none">Áp dụng cho tất cả link khách</button>
         <div class="sub" id="cNote" style="display:none">Màu và font đang chọn sẽ thành giao diện mặc định khi khách mở link.</div>
@@ -398,17 +401,17 @@ function renderChart(){
   const tots=days.map(d=>{const c=cnt.get(+d)||[0,0];return c[0]+c[1]});
   const max=Math.max(1,...days.map(d=>Math.max(...(cnt.get(+d)||[0,0])))),top=max<=5?5:Math.ceil(max/10)*10,any=tots.some(Boolean);
   $('chartSub').textContent='10 ngày booking gần nhất ('+fd(days[0])+' – '+fd(b)+'), số mã PO theo ngày NCC booking';
-  $('chartLg').innerHTML='<span><i style="background:var(--accent)"></i>Đã giao</span><span><i style="background:var(--c2)"></i>Chưa giao</span>';
+  $('chartLg').innerHTML='<span><i style="background:var(--c1,var(--accent))"></i>Đã giao</span><span><i style="background:var(--c2)"></i>Chưa giao</span>';
   const W=720,H=230,L=30,R=6,T=18,Bm=24,pw=W-L-R,ph=H-T-Bm,bw=pw/days.length;
   let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="PO đã giao và chưa giao theo ngày booking">`;
   [0,.5,1].forEach(f=>{const y=T+ph-ph*f;s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-5}" y="${y+4}" text-anchor="end">${Math.round(top*f)}</text>`});
   // Mỗi ngày 1 nhóm 2 cột: đã giao (màu nhấn) | chưa giao (cam); các ngày xen kẽ nền nhạt + vạch ngăn để dễ phân biệt
   days.forEach((d,i)=>{
     const c=cnt.get(+d)||[0,0],v=c[0]+c[1],x=L+i*bw;
-    if(i%2===0)s+=`<rect x="${x}" y="${T}" width="${bw}" height="${ph}" fill="var(--line)" opacity=".35"/>`;
+    if(i%2===0)s+=`<rect x="${x}" y="${T}" width="${bw}" height="${ph}" fill="var(--band,var(--line))" opacity="var(--band-op,.35)"/>`;
     if(i)s+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${T+ph}" stroke="var(--line)" stroke-dasharray="3 3"/>`;
     const w=Math.min(Math.max(4,(bw-14)/2),26),gx=x+(bw-(w*2+3))/2;
-    [[c[0],'var(--accent)'],[c[1],'var(--c2)']].forEach(([n,col],j)=>{
+    [[c[0],'var(--c1,var(--accent))'],[c[1],'var(--c2)']].forEach(([n,col],j)=>{
       const hh=n/top*ph,bx=gx+j*(w+3);
       if(n){s+=`<rect x="${bx}" y="${T+ph-hh}" width="${w}" height="${hh}" rx="${Math.min(3,hh/2)}" fill="${col}"/>`;
         s+=`<text x="${bx+w/2}" y="${T+ph-hh-4}" text-anchor="middle" style="font-weight:600">${n}</text>`}
@@ -514,19 +517,23 @@ let own={};  // phần khách tự chỉnh trên máy mình
 const lum=h=>{const n=parseInt(h.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)};
 let ui={};
 function applyUI(save){
-  ['--font','--fs','--bg','--ink','--accent','--on-accent','--card','--card-ink','--tile','--tile-ink'].forEach(p=>R.style.removeProperty(p));R.style.colorScheme='';
+  ['--font','--fs','--bg','--ink','--accent','--on-accent','--card','--card-ink','--tile','--tile-ink','--c1','--c2','--band','--band-op'].forEach(p=>R.style.removeProperty(p));R.style.colorScheme='';
   if(ui.font)R.style.setProperty('--font',ui.font);
   if(ui.size)R.style.setProperty('--fs',ui.size+'px');
   if(ui.bg){const dark=lum(ui.bg)<.3;R.style.setProperty('--bg',ui.bg);R.style.setProperty('--ink',dark?'#EDF2F0':'#13211D');
     R.style.setProperty('--card',dark?'color-mix(in srgb,var(--bg) 88%,white)':'color-mix(in srgb,var(--bg) 55%,white)');R.style.colorScheme=dark?'dark':'light'}
   if(ui.card){R.style.setProperty('--card',ui.card);R.style.setProperty('--card-ink',lum(ui.card)<.4?'#F4F7F6':'#13211D')}
   if(ui.tile){R.style.setProperty('--tile',ui.tile);R.style.setProperty('--tile-ink',lum(ui.tile)<.4?'#F4F7F6':'#13211D')}
+  if(ui.c1)R.style.setProperty('--c1',ui.c1);
+  if(ui.c2)R.style.setProperty('--c2',ui.c2);
+  if(ui.band){R.style.setProperty('--band',ui.band);R.style.setProperty('--band-op','1')}
   if(ui.ac){R.style.setProperty('--accent',ui.ac);R.style.setProperty('--on-accent',lum(ui.ac)<.4?'#fff':'#10201C')}
   const cs=getComputedStyle(R),hex=v=>/^#[0-9a-f]{6}$/i.test(v.trim())?v.trim():null;
   $('cFont').value=ui.font||$('cFont').options[0].value;$('cSize').value=ui.size||15;
   $('cBg').value=ui.bg||hex(cs.getPropertyValue('--bg'))||'#F2F5F3';$('cAc').value=ui.ac||hex(cs.getPropertyValue('--accent'))||'#0B6B5D';
   $('cCard').value=ui.card||cssHex('var(--card)')||'#FFFFFF';
   $('cTile').value=ui.tile||cssHex('var(--card)')||'#FFFFFF';
+  $('cC1').value=ui.c1||cssHex('var(--accent)')||'#0B6B5D';$('cC2').value=ui.c2||'#E3A23A';$('cBand').value=ui.band||cssHex('var(--line)')||'#D9DEDB';
   if(save){try{localStorage.setItem(KEY,JSON.stringify(own))}catch(e){}}
 }
 function setUI(k,v){own[k]=v;ui=Object.assign({},THEME,own);applyUI(true)}
@@ -541,12 +548,15 @@ $('cBg').addEventListener('input',e=>setUI('bg',e.target.value));
 $('cAc').addEventListener('input',e=>setUI('ac',e.target.value));
 $('cTile').addEventListener('input',e=>setUI('tile',e.target.value));
 $('cCard').addEventListener('input',e=>setUI('card',e.target.value));
+$('cC1').addEventListener('input',e=>setUI('c1',e.target.value));
+$('cC2').addEventListener('input',e=>setUI('c2',e.target.value));
+$('cBand').addEventListener('input',e=>setUI('band',e.target.value));
 // Về mặc định: bỏ phần tự chỉnh, quay về giao diện Kho vận đã chọn
 $('cReset').addEventListener('click',()=>{own={};ui=Object.assign({},THEME);applyUI(true)});
 // Chỉ link Tất cả NCC (nội bộ) mới có nút lưu giao diện cho khách
 if(MULTI&&window.API&&window.TOKEN){$('cSave').style.display='';$('cNote').style.display='';
   $('cSave').addEventListener('click',()=>{
-    const t={};['font','size','bg','ac','tile','card'].forEach(k=>{if(ui[k]!=null&&ui[k]!=='')t[k]=ui[k]});
+    const t={};['font','size','bg','ac','tile','card','c1','c2','band'].forEach(k=>{if(ui[k]!=null&&ui[k]!=='')t[k]=ui[k]});
     $('cSave').disabled=true;toast('Đang lưu giao diện…');
     fetch(window.API+'?api=1&k='+encodeURIComponent(window.TOKEN)+'&theme='+encodeURIComponent(JSON.stringify(t)))
       .then(r=>r.json()).then(d=>{$('cSave').disabled=false;
