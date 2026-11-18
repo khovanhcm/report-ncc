@@ -117,6 +117,8 @@ svg text{fill:var(--muted);font-size:11px;font-family:var(--font)}
 .ptrack{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
 .ptrack i{display:block;height:100%;background:var(--accent);border-radius:5px}
 .prow b{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.lg{display:flex;justify-content:center;gap:18px;font-size:.82rem;margin:4px 0 0;color:var(--card-ink,inherit)}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+:root{--c2:#E3A23A}
 .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:5px 8px;border-radius:6px;font-size:.78rem;display:none;z-index:9}
 ul.gaps{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:column;gap:3px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:8px;font-size:.87rem;display:none;z-index:10;max-width:90vw}
@@ -169,7 +171,7 @@ ul.gaps{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:
   <section class="card" id="nccSum" style="display:none"><div class="phead"><div><h2>Tổng hợp theo NCC</h2><div class="sub">Bấm vào một dòng để lọc toàn trang theo NCC đó; bấm lại để bỏ lọc.</div></div><button class="btn primary" id="expNcc">Xuất Excel</button></div><div id="nccTab"></div></section>
 
   <section class="grid2">
-    <div class="card"><h2>PO booking theo ngày</h2><div class="sub">Số mã PO theo ngày NCC booking</div><div id="chart"></div></div>
+    <div class="card"><h2>PO đã giao / chưa giao theo ngày</h2><div class="sub" id="chartSub">10 ngày booking gần nhất</div><div id="chart"></div><div class="lg" id="chartLg"></div></div>
     <div class="card"><h2>Trạng thái giao hàng</h2><div class="sub">Số chứng từ theo trạng thái. Bấm vào một trạng thái để sổ danh sách chứng từ.</div><div id="prov" style="display:flex;flex-direction:column;gap:7px"></div></div>
   </section>
 
@@ -388,20 +390,33 @@ function renderNcc(){
   $('nccSel').value=state.ncc;
 }
 function renderChart(){
+  // 10 ngày booking gần nhất trong kỳ: PO đã giao (màu nhấn) và chưa giao (màu cam) xếp chồng
   const g=range();let a=g[0],b=g[1];if(b>TODAY&&a<=TODAY)b=TODAY;
-  const cnt=new Map();D.O.forEach(o=>cnt.set(+o.b,(cnt.get(+o.b)||0)+1));
-  const days=[];for(let d=new Date(a);d<=b;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1))days.push(d);
-  const max=Math.max(1,...cnt.values()),top=Math.ceil(max/10)*10;
-  const W=720,H=220,L=30,R=6,T=10,Bm=24,pw=W-L-R,ph=H-T-Bm,bw=pw/days.length;
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Số PO booking theo ngày">`;
+  const st=new Date(b.getFullYear(),b.getMonth(),b.getDate()-9),from=st<a?a:st;
+  const cnt=new Map();D.O.forEach(o=>{const k=+o.b;const c=cnt.get(k)||[0,0];c[o.deliv?0:1]++;cnt.set(k,c)});
+  const days=[];for(let d=new Date(from);d<=b;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1))days.push(d);
+  const tots=days.map(d=>{const c=cnt.get(+d)||[0,0];return c[0]+c[1]});
+  const max=Math.max(1,...days.map(d=>Math.max(...(cnt.get(+d)||[0,0])))),top=max<=5?5:Math.ceil(max/10)*10,any=tots.some(Boolean);
+  $('chartSub').textContent='10 ngày booking gần nhất ('+fd(days[0])+' – '+fd(b)+'), số mã PO theo ngày NCC booking';
+  $('chartLg').innerHTML='<span><i style="background:var(--accent)"></i>Đã giao</span><span><i style="background:var(--c2)"></i>Chưa giao</span>';
+  const W=720,H=230,L=30,R=6,T=18,Bm=24,pw=W-L-R,ph=H-T-Bm,bw=pw/days.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="PO đã giao và chưa giao theo ngày booking">`;
   [0,.5,1].forEach(f=>{const y=T+ph-ph*f;s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-5}" y="${y+4}" text-anchor="end">${Math.round(top*f)}</text>`});
-  const step=Math.ceil(days.length/8);
+  // Mỗi ngày 1 nhóm 2 cột: đã giao (màu nhấn) | chưa giao (cam); các ngày xen kẽ nền nhạt + vạch ngăn để dễ phân biệt
   days.forEach((d,i)=>{
-    const v=cnt.get(+d)||0,h=v/top*ph,x=L+i*bw;
-    if(v){const w=Math.min(Math.max(2,bw-2),26);s+=`<rect x="${x+(bw-w)/2}" y="${T+ph-h}" width="${w}" height="${h}" rx="${Math.min(3,h/2)}" fill="var(--accent)"/>`;}
-    s+=`<rect x="${x}" y="${T}" width="${bw}" height="${ph}" fill="transparent" data-tip="${fd(d)}: ${v} PO"/>`;
-    if(i%step===0)s+=`<text x="${x+bw/2}" y="${H-7}" text-anchor="middle">${d.getDate()}/${d.getMonth()+1}</text>`;
+    const c=cnt.get(+d)||[0,0],v=c[0]+c[1],x=L+i*bw;
+    if(i%2===0)s+=`<rect x="${x}" y="${T}" width="${bw}" height="${ph}" fill="var(--line)" opacity=".35"/>`;
+    if(i)s+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${T+ph}" stroke="var(--line)" stroke-dasharray="3 3"/>`;
+    const w=Math.min(Math.max(4,(bw-14)/2),26),gx=x+(bw-(w*2+3))/2;
+    [[c[0],'var(--accent)'],[c[1],'var(--c2)']].forEach(([n,col],j)=>{
+      const hh=n/top*ph,bx=gx+j*(w+3);
+      if(n){s+=`<rect x="${bx}" y="${T+ph-hh}" width="${w}" height="${hh}" rx="${Math.min(3,hh/2)}" fill="${col}"/>`;
+        s+=`<text x="${bx+w/2}" y="${T+ph-hh-4}" text-anchor="middle" style="font-weight:600">${n}</text>`}
+    });
+    s+=`<rect x="${x}" y="${T}" width="${bw}" height="${ph}" fill="transparent" data-tip="${fd(d)}: ${v} PO · Đã giao ${c[0]} · Chưa giao ${c[1]}"/>`;
+    s+=`<text x="${x+bw/2}" y="${H-7}" text-anchor="middle">${d.getDate()}/${d.getMonth()+1}</text>`;
   });
+  if(!any)s+=`<text x="${W/2}" y="${T+ph/2}" text-anchor="middle">Không có PO booking trong 10 ngày này</text>`;
   $('chart').innerHTML=D.O.length?s+'</svg>':'<div class="empty">Không có PO booking trong kỳ.</div>';
 }
 function renderProv(){
@@ -488,7 +503,7 @@ if(MULTI){const s=$('nccSel');s.style.display='';s.innerHTML='<option value="">T
   $('expNcc').addEventListener('click',()=>save('Tong_hop_NCC_'+stamp()+'.xlsx',()=>[['Theo NCC',sheet(C.ncc,window._S)]]));}
 const tip=$('tip');
 $('chart').addEventListener('mousemove',e=>{const t=e.target.dataset&&e.target.dataset.tip;if(!t){tip.style.display='none';return}
-  tip.textContent=t;tip.style.display='block';tip.style.left=Math.min(e.clientX+12,innerWidth-150)+'px';tip.style.top=(e.clientY-30)+'px'});
+  tip.textContent=t;tip.style.display='block';tip.style.left=Math.max(8,Math.min(e.clientX+12,innerWidth-tip.offsetWidth-8))+'px';tip.style.top=(e.clientY-30)+'px'});
 $('chart').addEventListener('mouseleave',()=>tip.style.display='none');
 
 // ---- tùy chỉnh giao diện
