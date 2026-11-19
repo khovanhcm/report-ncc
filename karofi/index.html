@@ -81,6 +81,15 @@ button:hover{filter:brightness(1.25)}
 .cust .presets{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
 .cust .presets button{font-size:12px;padding:8px 6px}
 .cust hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+.kpi .v small{font-size:14px;font-weight:500;color:var(--muted);margin-left:8px}
+[data-d]{cursor:pointer}
+.kpi[data-d]:hover,tr.click:hover td{filter:brightness(.96)}
+.kpi[data-d]:hover{outline:2px solid var(--accent)}
+.bar span[data-d]:hover,rect[data-d]:hover,path[data-d]:hover{opacity:.8}
+.modal{position:fixed;inset:0;background:rgba(10,6,40,.55);display:none;align-items:center;justify-content:center;z-index:30;padding:20px}
+.modal.on{display:flex}
+.mbox{background:var(--panel);color:var(--ink);border-radius:14px;padding:16px 18px;width:min(1300px,100%);max-height:92vh;overflow:hidden}
+#mTable td,#mTable th{white-space:nowrap}
 .foot{color:var(--bg-muted);font-size:12px}
 </style>
 </head>
@@ -140,7 +149,7 @@ button:hover{filter:brightness(1.25)}
 
   <section class="card">
     <h2>Dữ liệu 3.DATA NCC</h2>
-    <div class="sub">Mỗi dòng là một DO (gộp các dòng sản phẩm). Lọc rồi xuất Excel đúng bố cục sheet 3.DATA NCC.</div>
+    <div class="sub">Mỗi dòng là một DO (gộp các dòng sản phẩm). Mẹo: nhấn vào thẻ số liệu, cột biểu đồ hoặc dòng bảng phía trên để xem data chi tiết. Lọc rồi xuất Excel đúng bố cục sheet 3.DATA NCC.</div>
     <div class="tools">
       <select id="fTd"><option value="">Tất cả tiến độ</option></select>
       <select id="fProv"><option value="">Tất cả tỉnh</option></select>
@@ -166,6 +175,11 @@ button:hover{filter:brightness(1.25)}
   <hr><button id="cReset" style="width:100%">Khôi phục mặc định</button>
   <div class="small muted" style="margin-top:8px">Tuỳ chỉnh được lưu trên trình duyệt này.</div>
 </aside>
+<div class="modal" id="modal"><div class="mbox">
+  <div class="hdr"><div><h2 id="mTitle"></h2><div class="small muted" id="mSum"></div></div>
+  <div style="display:flex;gap:8px"><button id="mX">Xuất Excel</button><button class="btn-ghost" id="mClose" style="color:var(--ink);border-color:var(--line)">✕ Đóng</button></div></div>
+  <div class="scroll" style="max-height:70vh;margin-top:10px"><table id="mTable"></table></div>
+</div></div>
 <div class="tip" id="tip"></div>
 
 <script>
@@ -202,14 +216,14 @@ function kpis(){
   const ct = done.filter(r=>r.hasCT);
   const kip = done.filter(r=>r.kip===true);
   const K = [
-    ['Tổng DO', n.toLocaleString('vi-VN'), `${new Set(rows.map(r=>r.po)).size} PO · ${new Set(rows.map(r=>r.bill)).size} bill`, ''],
-    ['Đã hoàn tất', fp(pct(done.length,n)), `${done.length} / ${n} DO`, ''],
-    ['Đúng cam kết', fp(pct(ok.length,done.length)), `${ok.length} DO đã hoàn tất`, pct(ok.length,done.length)>=90?'ok':'warn'],
-    ['Sai cam kết', bad.length, `${fp(pct(bad.length,done.length))} số DO đã hoàn tất`, 'bad'],
-    ['Chưa hoàn tất', open.length, `${openOver.length} DO đã quá leadtime`, openOver.length?'warn':''],
-    ['Ngày giao TB', f1(avg)+' ngày', `Leadtime cam kết TB ${f1(avgLt)} ngày`, avg>avgLt?'bad':'ok'],
+    ['Tổng DO', n.toLocaleString('vi-VN'), `${new Set(rows.map(r=>r.po)).size} PO · ${new Set(rows.map(r=>r.bill)).size} bill`, '', dr('Tất cả DO', r=>true)],
+    ['Đã hoàn tất', `${fp(pct(done.length,n))}<small>${done.length} DO</small>`, `trên ${n} DO`, '', dr('DO đã hoàn tất', r=>r.done)],
+    ['Đúng cam kết', `${fp(pct(ok.length,done.length))}<small>${ok.length} DO</small>`, `trên ${done.length} DO đã hoàn tất`, 'ok', dr('DO đúng cam kết', r=>r.td==='ĐÚNG CAM KẾT')],
+    ['Sai cam kết', `${fp(pct(bad.length,done.length))}<small>${bad.length} DO</small>`, `trên ${done.length} DO đã hoàn tất`, 'bad', dr('DO sai cam kết', r=>r.td==='SAI CAM KẾT')],
+    ['Chưa hoàn tất', `${fp(pct(open.length,n))}<small>${open.length} DO</small>`, `${openOver.length} DO đã quá leadtime`, openOver.length?'warn':'', dr('DO chưa hoàn tất', r=>!r.done)],
+    ['Ngày giao TB', f1(avg)+'<small>ngày</small>', `Leadtime cam kết TB ${f1(avgLt)} ngày`, avg>avgLt?'bad':'ok', dr('DO đã hoàn tất (sắp theo số ngày giao)', r=>r.done)],
   ];
-  $('#kpis').innerHTML = K.map(([l,v,s,c])=>`<div class="kpi ${c}"><div class="lb">${l}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`).join('');
+  $('#kpis').innerHTML = K.map(([l,v,s,c,d])=>`<div class="kpi ${c}" ${d} title="Nhấn để xem data"><div class="lb">${l}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`).join('');
   return {n,done,ok,bad,open,openOver,ct,kip};
 }
 
@@ -239,6 +253,26 @@ function insight(S){
   $('#insight').innerHTML = `<h2>Nhận định chính</h2><ul>${L.map(x=>`<li>${x}</li>`).join('')}</ul>`;
 }
 
+// ---- xem data khi nhấn
+const DR = [];
+function dr(title, f){ DR.push({title, f}); return `data-d="${DR.length-1}"`; }
+let DRL = [], DRT = '';
+function openDrill(i){
+  const {title, f} = DR[i]; DRT = title;
+  DRL = rows.filter(f).sort((a,b)=>(b.over??-99)-(a.over??-99));
+  $('#mTitle').textContent = title;
+  const ok = DRL.filter(r=>r.td==='ĐÚNG CAM KẾT').length, bad = DRL.filter(r=>r.td==='SAI CAM KẾT').length, dn = ok+bad;
+  $('#mSum').innerHTML = `<b>${DRL.length}</b> DO · Đúng ${ok}${dn?` (${fp(pct(ok,dn))})`:''} · Sai ${bad}${dn?` (${fp(pct(bad,dn))})`:''} · Chưa hoàn tất ${DRL.length-dn}`;
+  $('#mTable').innerHTML = `<thead><tr>${COLS.map(c=>`<th>${c[0]}</th>`).join('')}<th class="r">SỐ NGÀY GIAO</th><th class="r">LỆCH LEADTIME</th></tr></thead><tbody>`
+    + DRL.map(r=>`<tr>${COLS.map(([,k])=>`<td>${k==='td'?tdPill(r.td):esc(r[k])}</td>`).join('')}<td class="r num">${r.ngayGiao??''}</td><td class="r num">${r.over==null?'':(r.over>0?'+':'')+r.over}</td></tr>`).join('') + '</tbody>';
+  $('#modal').classList.add('on');
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-d]');
+  if(t && !t.closest('#modal')){ e.stopPropagation(); openDrill(+t.dataset.d); }
+}, true);
+document.addEventListener('keydown', e => { if(e.key==='Escape') $('#modal').classList.remove('on'); });
+
 // ---- tooltip
 const tip = $('#tip');
 document.addEventListener('mousemove', e => {
@@ -266,7 +300,7 @@ function trend(){
     const x = ml+i*bw+bw*0.18, w = bw*0.64; let base = 0;
     const lab = new Date(d.k).toISOString().slice(5,10).split('-').reverse().join('/');
     const tipTxt = `<b>Xe lấy ${lab}</b><br>Đúng: ${d.ok} · Sai: ${d.bad} · Chưa: ${d.open}` + (d.ok+d.bad?`<br>Đúng cam kết ${fp(pct(d.ok,d.ok+d.bad))}`:'');
-    for(const [v,c] of [[d.ok,'var(--ok)'],[d.bad,'var(--bad)'],[d.open,'var(--wait)']]){ if(!v) continue; s += `<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="${c}" data-tip="${esc(tipTxt)}"/>`; base+=v; }
+    for(const [v,c,t,f] of [[d.ok,'var(--ok)','Đúng cam kết',r=>r.td==='ĐÚNG CAM KẾT'],[d.bad,'var(--bad)','Sai cam kết',r=>r.td==='SAI CAM KẾT'],[d.open,'var(--wait)','Chưa hoàn tất',r=>!r.done]]){ if(!v) continue; s += `<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="${c}" data-tip="${esc(tipTxt)}" ${dr(`Xe lấy ${lab} · ${t}`, r=>pd(r.xl)===d.k && f(r))}/>`; base+=v; }
     s += `<text x="${x+w/2}" y="${y(base)-4}" font-size="11" text-anchor="middle" fill="var(--ink)">${base}</text>`;
     s += `<text x="${x+w/2}" y="${H-mb+16}" font-size="11" text-anchor="middle" fill="var(--muted)">${lab}</text>`;
     if(d.ok+d.bad) pts.push([x+w/2, yp(pct(d.ok,d.ok+d.bad))]);
@@ -279,12 +313,15 @@ function trend(){
 function gtable(el, key, label, showLt){
   const G = group(key);
   const max = Math.max(...G.map(g=>g.n));
-  let h = `<div class="scroll" style="max-height:440px"><table><thead><tr><th>${label}</th><th class="r">DO</th><th style="width:34%">Đúng · Sai · Chưa</th><th class="r">% đúng</th>${showLt?'<th class="r">Leadtime</th>':''}<th class="r">Ngày TB</th></tr></thead><tbody>`;
+  let h = `<div class="scroll" style="max-height:440px"><table><thead><tr><th>${label}</th><th class="r">DO</th><th style="width:34%">Đúng · Sai · Chưa</th><th class="r">% đúng</th><th class="r">% sai</th>${showLt?'<th class="r">Leadtime</th>':''}<th class="r">Ngày TB</th></tr></thead><tbody>`;
   for(const g of G){
     const dn = g.ok+g.bad, r = pct(g.ok,dn), avg = dn? g.sumD/dn : null, w = g.n/max*100;
     const tipTxt = `<b>${esc(g.k)}</b><br>Đúng ${g.ok} · Sai ${g.bad} · Chưa ${g.open}`;
-    h += `<tr><td>${esc(g.k)}</td><td class="r num">${g.n}</td><td><div class="bar" style="width:${Math.max(w,8)}%;min-width:0" data-tip="${esc(tipTxt)}"><span style="width:${g.ok/g.n*100}%;background:var(--ok)"></span><span style="width:${g.bad/g.n*100}%;background:var(--bad)"></span><span style="width:${g.open/g.n*100}%;background:var(--wait)"></span></div></td>`
-      + `<td class="r num"><span class="pill ${dn? (r>=90?'p-ok':r>=70?'p-warn':'p-bad') : 'p-wait'}">${dn?fp(r):'–'}</span></td>`
+    const K = g.k, lb = label+': '+K;
+    const seg = (v,col,t,f) => v ? `<span style="width:${v/g.n*100}%;background:${col}" ${dr(lb+' · '+t, r=>r[key]===K && f(r))} data-tip="${esc(`<b>${esc(K)}</b><br>${t}: ${v} DO`)}"></span>` : '';
+    h += `<tr class="click" ${dr(lb, r=>r[key]===K)}><td>${esc(K)}</td><td class="r num">${g.n}</td><td><div class="bar" style="width:${Math.max(w,8)}%;min-width:0">${seg(g.ok,'var(--ok)','Đúng cam kết',r=>r.td==='ĐÚNG CAM KẾT')}${seg(g.bad,'var(--bad)','Sai cam kết',r=>r.td==='SAI CAM KẾT')}${seg(g.open,'var(--wait)','Chưa hoàn tất',r=>!r.done)}</div></td>`
+      + `<td class="r num"><span class="pill ${dn? (r>=90?'p-ok':r>=70?'p-warn':'p-bad') : 'p-wait'}" ${dr(lb+' · Đúng cam kết', r=>r[key]===K && r.td==='ĐÚNG CAM KẾT')}>${dn?fp(r):'–'}</span></td>`
+      + `<td class="r num"><span class="pill ${dn&&g.bad? 'p-bad':'p-wait'}" ${dr(lb+' · Sai cam kết', r=>r[key]===K && r.td==='SAI CAM KẾT')}>${dn?fp(100-r):'–'}</span></td>`
       + (showLt?`<td class="r num">${esc([...g.lts].join(', '))}</td>`:'')
       + `<td class="r num">${avg==null?'–':f1(avg)}</td></tr>`;
   }
@@ -294,13 +331,13 @@ function gtable(el, key, label, showLt){
 function dev(){
   const ok = rows.filter(r=>r.td==='ĐÚNG CAM KẾT').length, bad = rows.filter(r=>r.td==='SAI CAM KẾT').length, n = ok+bad;
   const R=110, r=68, cx=150, cy=140, W=520, H=280;
-  const arc = (a0,a1,col,t) => { const p=(a,rr)=>[cx+rr*Math.sin(a), cy-rr*Math.cos(a)]; const L=a1-a0>Math.PI?1:0;
+  const arc = (a0,a1,col,t,d) => { const p=(a,rr)=>[cx+rr*Math.sin(a), cy-rr*Math.cos(a)]; const L=a1-a0>Math.PI?1:0;
     const [x0,y0]=p(a0,R),[x1,y1]=p(a1,R),[x2,y2]=p(a1,r),[x3,y3]=p(a0,r);
-    return `<path d="M${x0},${y0} A${R},${R} 0 ${L} 1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${L} 0 ${x3},${y3}Z" fill="${col}" stroke="var(--panel)" stroke-width="2" data-tip="${esc(t)}"/>`; };
+    return `<path d="M${x0},${y0} A${R},${R} 0 ${L} 1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${L} 0 ${x3},${y3}Z" fill="${col}" stroke="var(--panel)" stroke-width="2" data-tip="${esc(t)}" ${d}/>`; };
   const aOk = ok/n*2*Math.PI;
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:560px;display:block;margin:auto" role="img" aria-label="Tỉ lệ đúng/sai cam kết">`;
-  s += arc(0, Math.min(aOk, 2*Math.PI-1e-4), 'var(--ok)', `Đúng cam kết: ${ok} DO (${fp(pct(ok,n))})`);
-  if(bad) s += arc(aOk, 2*Math.PI-1e-4, 'var(--bad)', `Sai cam kết: ${bad} DO (${fp(pct(bad,n))})`);
+  s += arc(0, Math.min(aOk, 2*Math.PI-1e-4), 'var(--ok)', `Đúng cam kết: ${ok} DO (${fp(pct(ok,n))})`, dr('DO đúng cam kết', r=>r.td==='ĐÚNG CAM KẾT'));
+  if(bad) s += arc(aOk, 2*Math.PI-1e-4, 'var(--bad)', `Sai cam kết: ${bad} DO (${fp(pct(bad,n))})`, dr('DO sai cam kết', r=>r.td==='SAI CAM KẾT'));
   s += `<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="30" font-weight="600" fill="var(--ok)">${fp(pct(ok,n))}</text><text x="${cx}" y="${cy+26}" text-anchor="middle" font-size="12" fill="var(--muted)">đúng cam kết</text>`;
   const item = (y,col,lab,v) => `<rect x="300" y="${y-12}" width="14" height="14" rx="3" fill="${col}"/><text x="324" y="${y}" font-size="14" fill="var(--ink)">${lab}</text><text x="324" y="${y+26}" font-size="24" font-weight="600" fill="${col}">${v}</text><text x="${324+String(v).length*15+8}" y="${y+26}" font-size="13" fill="var(--muted)">DO · ${fp(pct(v,n))}</text>`;
   s += item(100,'var(--ok)','Đúng cam kết',ok) + item(178,'var(--bad)','Sai cam kết',bad);
@@ -310,16 +347,16 @@ function dev(){
 function status(S){
   const m = new Map(); rows.forEach(r=>m.set(r.st,(m.get(r.st)||0)+1));
   const D=[...m].sort((a,b)=>b[1]-a[1]), n=rows.length;
-  $('#status').innerHTML = `<table><tbody>${D.map(([k,v])=>`<tr><td>${esc(k)}</td><td style="width:40%"><div class="bar" style="background:transparent"><span style="width:${v/n*100}%;background:${k.startsWith('5')?'var(--ok)':k.startsWith('6')||k.startsWith('Không')?'var(--bad)':'var(--wait)'}"></span></div></td><td class="r num">${v}</td><td class="r num muted">${fp(pct(v,n))}</td></tr>`).join('')}</tbody></table>`;
+  $('#status').innerHTML = `<table><tbody>${D.map(([k,v])=>`<tr class="click" ${dr('Trạng thái: '+k, r=>r.st===k)}><td>${esc(k)}</td><td style="width:40%"><div class="bar" style="background:transparent"><span style="width:${v/n*100}%;background:${k.startsWith('5')?'var(--ok)':k.startsWith('6')||k.startsWith('Không')?'var(--bad)':'var(--wait)'}"></span></div></td><td class="r num">${v}</td><td class="r num muted">${fp(pct(v,n))}</td></tr>`).join('')}</tbody></table>`;
   const ctd = S.done.filter(r=>r.ltCT!=null);
   const avg = ctd.reduce((s,r)=>s+r.ltCT,0)/(ctd.length||1);
   const over7 = ctd.filter(r=>r.ltCT>7).length;
   const pend = S.done.filter(r=>!r.hasCT);
   $('#docs').innerHTML = `<table><tbody>
-    <tr><td>Đã trả chứng từ</td><td class="r num"><b>${S.ct.length}</b></td><td class="r num muted">${fp(pct(S.ct.length,S.done.length))}</td></tr>
-    <tr><td>Chưa trả chứng từ</td><td class="r num"><b>${pend.length}</b></td><td class="r num muted">${fp(pct(pend.length,S.done.length))}</td></tr>
+    <tr class="click" ${dr('Đã trả chứng từ', r=>r.done&&r.hasCT)}><td>Đã trả chứng từ</td><td class="r num"><b>${S.ct.length}</b></td><td class="r num muted">${fp(pct(S.ct.length,S.done.length))}</td></tr>
+    <tr class="click" ${dr('Chưa trả chứng từ', r=>r.done&&!r.hasCT)}><td>Chưa trả chứng từ</td><td class="r num"><b>${pend.length}</b></td><td class="r num muted">${fp(pct(pend.length,S.done.length))}</td></tr>
     <tr><td>Leadtime trả chứng từ TB (từ ngày hoàn tất)</td><td class="r num"><b>${f1(avg)}</b></td><td class="r muted">ngày</td></tr>
-    <tr><td>Trả chứng từ sau hơn 7 ngày</td><td class="r num"><b>${over7}</b></td><td class="r num muted">${fp(pct(over7,ctd.length))}</td></tr>
+    <tr class="click" ${dr('Trả chứng từ sau hơn 7 ngày', r=>r.done&&r.ltCT>7)}><td>Trả chứng từ sau hơn 7 ngày</td><td class="r num"><b>${over7}</b></td><td class="r num muted">${fp(pct(over7,ctd.length))}</td></tr>
   </tbody></table>`;
 }
 
@@ -351,9 +388,9 @@ function initFilters(){
 
 function loadXLSX(){ return window.XLSX ? Promise.resolve() : new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
 const toDate = s => { const m=/^(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}))?/.exec(s||''); return m ? new Date(+m[3],m[2]-1,+m[1],+(m[4]||0),+(m[5]||0)) : s; };
-async function exportX(){
+async function exportX(L, name){
   try{ await loadXLSX(); }catch(e){ alert('Không tải được thư viện Excel. Kiểm tra kết nối mạng.'); return; }
-  const L = filtered();
+  L = L || filtered();
   const aoa = [COLS.map(c=>c[0]), ...L.map(r=>COLS.map(([,k])=>['bk','xl','hp','ngayCT','ht'].includes(k)?toDate(r[k]):(r[k]??'')))];
   const ws = XLSX.utils.aoa_to_sheet(aoa, {cellDates:true});
   for(const [ci,fmt] of [[2,'dd/mm/yyyy'],[3,'dd/mm/yyyy'],[4,'dd/mm/yyyy'],[10,'dd/mm/yyyy'],[12,'dd/mm/yyyy hh:mm']])
@@ -361,9 +398,9 @@ async function exportX(){
   ws['!cols'] = [12,20,12,12,12,36,22,20,36,30,14,28,16,14,12,16].map(w=>({wch:w}));
   ws['!autofilter'] = {ref: ws['!ref']};
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '3.DATA NCC');
-  XLSX.writeFile(wb, `KAROFI_3.DATA_NCC_${DATA.cut.slice(0,10).split('/').reverse().join('')}.xlsx`);
+  XLSX.writeFile(wb, `KAROFI_${name||'3.DATA_NCC'}_${DATA.cut.slice(0,10).split('/').reverse().join('')}.xlsx`);
 }
-$('#btnX').onclick = exportX;
+$('#btnX').onclick = () => exportX();
 
 stamp(); const S = kpis(); insight(S); trend(); gtable('#byProv','tinhLT','Tỉnh nhận',true); gtable('#byKho','khoTT','Kho TT phát cuối',false); dev(); status(S); todo(); initFilters(); detail();
 $('#foot').innerHTML = `Quy tắc: Trạng thái giao hàng đối chiếu bill giao hàng với 2.DATA BILL · Ngày hoàn tất = ngày cập nhật trạng thái khi "5 - Hoàn tất giao hàng" · Leadtime theo 4.LEADTIME (Long An → tỉnh nhận) · Đúng cam kết khi số ngày từ xe lấy đến hoàn tất ≤ leadtime tối đa · Dữ liệu booking đến ${CUT_BOOKING}.`;
@@ -398,6 +435,9 @@ $('#cReset').onclick = () => { CFG = JSON.parse(JSON.stringify(DEF)); save(); ap
 $('#btnCust').onclick = () => $('#cust').classList.add('on');
 $('#custClose').onclick = () => $('#cust').classList.remove('on');
 applyUI();
+$('#mClose').onclick = () => $('#modal').classList.remove('on');
+$('#modal').onclick = e => { if(e.target.id==='modal') $('#modal').classList.remove('on'); };
+$('#mX').onclick = () => exportX(DRL, DRT.replace(/[^\p{L}\p{N}]+/gu,'_').slice(0,60));
 let rt; addEventListener('resize',()=>{clearTimeout(rt); rt=setTimeout(trend,150);});
 </script>
 </body>
