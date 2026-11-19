@@ -31,7 +31,7 @@ h2{font-size:17px;font-weight:600}
 .card{background:var(--panel);border-radius:14px;padding:16px}
 .card h2{margin-bottom:4px}
 .card .sub{color:var(--muted);font-size:12.5px;margin-bottom:12px}
-.grid{display:grid;gap:16px}
+.grid{display:grid;gap:16px;align-items:start}
 .g2{grid-template-columns:1fr 1fr}
 .g32{grid-template-columns:3fr 2fr}
 @media(max-width:960px){.g2,.g32{grid-template-columns:1fr}}
@@ -113,6 +113,14 @@ tr.grp td{background:var(--panel2);font-size:12px;font-weight:600;color:var(--ac
 .flow .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
 .flow .ar{text-align:center;color:var(--muted);line-height:1}
 @media print{.btn-ghost,#btnX,.tools,.cust,.modal{display:none!important} body{background:#fff} .card,.kpi,.insight{break-inside:avoid}}
+.card>h2.tg,.insight>h2.tg{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;margin-bottom:0}
+h2.tg::before{content:"▸";display:inline-block;transition:transform .15s;color:var(--accent);font-size:15px}
+.open>h2.tg::before{transform:rotate(90deg)}
+h2.tg:hover{color:var(--accent)}
+.cbody{display:none;margin-top:6px}
+.open>.cbody{display:block}
+.tgall{display:flex;gap:8px;justify-content:flex-end;margin-bottom:-8px}
+@media print{.cbody{display:block!important}}
 .foot{color:var(--bg-muted);font-size:12px}
 </style>
 </head>
@@ -126,24 +134,9 @@ tr.grp td{background:var(--panel2);font-size:12px;font-weight:600;color:var(--ac
 
   <section class="kpis" id="kpis"></section>
 
+  <div class="tgall"><button class="btn-ghost" id="openAll">Mở tất cả</button><button class="btn-ghost" id="closeAll">Thu gọn tất cả</button></div>
   <section class="insight" id="insight"></section>
 
-  <section class="card" id="commit">
-    <h2>Cam kết chất lượng KAROFI <span class="muted small" style="font-weight:500">· thống nhất tại cuộc họp 19/11/2026</span></h2>
-    <div class="sub">Chất lượng dịch vụ = tỉ lệ DO giao đúng leadtime cam kết trên số DO đã hoàn tất.</div>
-    <div class="cm-grid">
-      <div class="cm now"><div class="lb">Hiện trạng</div><div class="v num" id="cmNow"></div><div class="s" id="cmNowS"></div></div>
-      <div class="cm-arrow">→</div>
-      <div class="cm"><div class="lb">Đơn từ 19/11 đến 01/12/2026</div><div class="v num">85%</div><div class="s" id="cmGap1"></div></div>
-      <div class="cm-arrow">→</div>
-      <div class="cm"><div class="lb">Đơn sau 01/12/2026</div><div class="v num">100%</div><div class="s" id="cmGap2"></div></div>
-    </div>
-    <div class="cm-track" id="cmTrack"></div>
-    <ul class="cm-list">
-      <li>ĐMX gửi báo cáo cam kết chất lượng <b>hằng ngày</b> (trang này).</li>
-      <li>Có <b>nhân sự phụ trách trực tiếp</b> tại kho.</li>
-    </ul>
-  </section>
 
   <section class="card">
     <h2>Tiến độ theo ngày xe lấy</h2>
@@ -185,6 +178,22 @@ tr.grp td{background:var(--panel2);font-size:12px;font-weight:600;color:var(--ac
     <h2>Cần xử lý: DO chưa hoàn tất</h2>
     <div class="sub">Sắp theo số ngày quá leadtime tính đến thời điểm dữ liệu. Quá hạn = số ngày từ xe lấy đến nay lớn hơn leadtime tối đa.</div>
     <div class="scroll" style="max-height:380px"><table id="todo"></table></div>
+  </section>
+  <section class="card" id="commit">
+    <h2>Cam kết chất lượng KAROFI <span class="muted small" style="font-weight:500">· thống nhất tại cuộc họp 19/11/2026</span></h2>
+    <div class="sub">Chất lượng dịch vụ = tỉ lệ DO giao đúng leadtime cam kết trên số DO đã hoàn tất.</div>
+    <div class="cm-grid">
+      <div class="cm now"><div class="lb">Hiện trạng</div><div class="v num" id="cmNow"></div><div class="s" id="cmNowS"></div></div>
+      <div class="cm-arrow">→</div>
+      <div class="cm"><div class="lb">Đơn từ 19/11 đến 01/12/2026</div><div class="v num">85%</div><div class="s" id="cmGap1"></div></div>
+      <div class="cm-arrow">→</div>
+      <div class="cm"><div class="lb">Đơn sau 01/12/2026</div><div class="v num">100%</div><div class="s" id="cmGap2"></div></div>
+    </div>
+    <div class="cm-track" id="cmTrack"></div>
+    <ul class="cm-list">
+      <li>ĐMX gửi báo cáo cam kết chất lượng <b>hằng ngày</b> (trang này).</li>
+      <li>Có <b>nhân sự phụ trách trực tiếp</b> tại kho.</li>
+    </ul>
   </section>
 
 
@@ -531,6 +540,21 @@ applyUI();
 $('#mClose').onclick = () => $('#modal').classList.remove('on');
 $('#modal').onclick = e => { if(e.target.id==='modal') $('#modal').classList.remove('on'); };
 $('#mX').onclick = () => exportX(DRL, DRT.replace(/[^\p{L}\p{N}]+/gu,'_').slice(0,60));
+
+// ---- thu gọn / mở từng mục
+function setupCollapse(){
+  document.querySelectorAll('.wrap .card, .wrap .insight').forEach(c=>{
+    const h = c.querySelector(':scope > h2'); if(!h || h.classList.contains('tg')) return;
+    h.classList.add('tg'); const body = document.createElement('div'); body.className='cbody';
+    while(h.nextSibling) body.appendChild(h.nextSibling);
+    c.appendChild(body);
+    h.onclick = () => { c.classList.toggle('open'); if(c.querySelector('#trend')) setTimeout(trend,10); };
+  });
+}
+setupCollapse();
+const setAll = on => { document.querySelectorAll('.wrap .card, .wrap .insight').forEach(c=>c.classList.toggle('open',on)); setTimeout(trend,10); };
+$('#openAll').onclick = () => setAll(true);
+$('#closeAll').onclick = () => setAll(false);
 let rt; addEventListener('resize',()=>{clearTimeout(rt); rt=setTimeout(trend,150);});
 </script>
 </body>
