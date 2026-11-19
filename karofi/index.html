@@ -133,6 +133,9 @@ h2.tg:hover{color:var(--accent)}
 .flow.row .st{flex:1;background:var(--panel)}
 .flow.row .ar{display:flex;align-items:center;font-size:18px}
 @media(max-width:900px){.flow.row{flex-direction:column}}
+a.lk{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;font-weight:600}
+td.bad a.lk{color:var(--bad)} td.warn a.lk{color:var(--warn)}
+tr.tot td{font-weight:700;border-top:2px solid var(--accent);background:var(--panel)!important}
 .foot{color:var(--bg-muted);font-size:12px}
 </style>
 </head>
@@ -155,6 +158,13 @@ h2.tg:hover{color:var(--accent)}
     <div class="sub">Số DO mỗi ngày xe lấy hàng, chia theo kết quả cam kết. Đường tím: tỉ lệ đúng cam kết trên số DO đã hoàn tất.</div>
     <div class="legend"><span><i style="background:var(--ok)"></i>Đúng cam kết</span><span><i style="background:var(--bad)"></i>Sai cam kết</span><span><i style="background:var(--wait)"></i>Chưa hoàn tất</span><span><i style="background:var(--line2);height:3px;width:14px"></i>% đúng cam kết</span><span><i style="border-top:2px dashed var(--line2);height:0;width:14px;background:none"></i>Mức cam kết 85%</span></div>
     <div id="trend"></div>
+  </section>
+
+  <section class="card" id="lateDay">
+    <h2>Trễ cam kết theo ngày</h2>
+    <div class="sub">Sai cam kết = DO hoàn tất sau leadtime tối đa. Đang trễ = DO chưa hoàn tất nhưng đã quá leadtime tính đến thời điểm dữ liệu. Nhấn vào số để xem danh sách DO.</div>
+    <div class="tabs" id="ldTabs" style="margin-bottom:10px"><button class="on" data-b="xl">Theo ngày xe lấy</button><button data-b="ht">Theo ngày hoàn tất</button></div>
+    <div class="scroll" style="background:var(--panel2)"><table id="ldTable"></table></div>
   </section>
 
   <section class="grid g2">
@@ -549,6 +559,41 @@ applyUI();
 $('#mClose').onclick = () => $('#modal').classList.remove('on');
 $('#modal').onclick = e => { if(e.target.id==='modal') $('#modal').classList.remove('on'); };
 $('#mX').onclick = () => exportX(DRL, DRT.replace(/[^\p{L}\p{N}]+/gu,'_').slice(0,60));
+
+// ---- trễ cam kết theo ngày
+let LDB = 'xl';
+function lateDay(){
+  const key = r => LDB==='xl' ? r.xl : (r.done ? r.ht.slice(0,10) : null);
+  const m = new Map();
+  for(const r of rows){ const k = key(r); if(!k) continue; if(!m.has(k)) m.set(k,[]); m.get(k).push(r); }
+  const days = [...m.keys()].sort((a,b)=>pd(a)-pd(b));
+  const lab = LDB==='xl' ? 'Ngày xe lấy' : 'Ngày hoàn tất';
+  const cell = (v, title, f, cls='') => v ? `<td class="r num ${cls}"><a class="lk" ${dr(title, f)}>${v}</a></td>` : `<td class="r num muted">–</td>`;
+  const row = (name, L, inK, isTot) => {
+    const done = L.filter(r=>r.done), bad = done.filter(r=>r.td==='SAI CAM KẾT');
+    const b1 = bad.filter(r=>r.over===1), b2 = bad.filter(r=>r.over===2), b3 = bad.filter(r=>r.over>=3);
+    const lateOpen = L.filter(r=>!r.done && r.over>0);
+    const avg = bad.length ? bad.reduce((t,r)=>t+r.over,0)/bad.length : null;
+    const p = pct(bad.length, done.length);
+    const t = `${lab}: ${name}`;
+    return `<tr${isTot?' class="tot"':''}><td>${esc(name)}</td><td class="r num">${L.length}</td><td class="r num">${done.length}</td>`
+      + cell(bad.length, t+' · Sai cam kết', r=>inK(r) && r.td==='SAI CAM KẾT', 'bad')
+      + `<td class="r num"><span class="pill ${!done.length?'p-wait':p<=100-TARGET?'p-ok':p<=30?'p-warn':'p-bad'}">${done.length?fp(p):'–'}</span></td>`
+      + cell(b1.length, t+' · Trễ 1 ngày', r=>inK(r) && r.td==='SAI CAM KẾT' && r.over===1)
+      + cell(b2.length, t+' · Trễ 2 ngày', r=>inK(r) && r.td==='SAI CAM KẾT' && r.over===2)
+      + cell(b3.length, t+' · Trễ từ 3 ngày', r=>inK(r) && r.td==='SAI CAM KẾT' && r.over>=3)
+      + `<td class="r num">${avg==null?'–':f1(avg)}</td>`
+      + (LDB==='xl' ? cell(lateOpen.length, t+' · Đang trễ (chưa hoàn tất)', r=>inK(r) && !r.done && r.over>0, 'warn') : '')
+      + `</tr>`;
+  };
+  let h = `<thead><tr><th>${lab}</th><th class="r">Tổng DO</th><th class="r">Đã hoàn tất</th><th class="r">Sai cam kết</th><th class="r">% sai</th><th class="r">Trễ 1 ngày</th><th class="r">Trễ 2 ngày</th><th class="r">Trễ ≥ 3 ngày</th><th class="r">Số ngày trễ TB</th>${LDB==='xl'?'<th class="r">Đang trễ (chưa hoàn tất)</th>':''}</tr></thead><tbody>`;
+  for(const d of days) h += row(d, m.get(d), r=>key(r)===d, false);
+  const all = days.flatMap(d=>m.get(d));
+  h += row('Tổng', all, r=>key(r)!=null, true);
+  $('#ldTable').innerHTML = h + '</tbody>';
+}
+$('#ldTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ LDB=b.dataset.b; $('#ldTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); lateDay(); });
+lateDay();
 
 // ---- thu gọn / mở từng mục
 function setupCollapse(){
