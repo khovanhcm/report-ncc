@@ -90,6 +90,7 @@ button:hover{filter:brightness(1.25)}
 .modal.on{display:flex}
 .mbox{background:var(--panel);color:var(--ink);border-radius:14px;padding:16px 18px;width:min(1300px,100%);max-height:92vh;overflow:hidden}
 #mTable td,#mTable th{white-space:nowrap}
+tr.grp td{background:var(--panel2);font-size:12px;font-weight:600;color:var(--accent);padding-top:8px}
 .foot{color:var(--bg-muted);font-size:12px}
 </style>
 </head>
@@ -115,7 +116,7 @@ button:hover{filter:brightness(1.25)}
   <section class="grid g2">
     <div class="card">
       <h2>Theo tỉnh nhận</h2>
-      <div class="sub">Sắp theo số DO. Ngày TB = số ngày từ xe lấy đến hoàn tất, so với leadtime cam kết (tối đa).</div>
+      <div class="sub">Sắp theo leadtime cam kết (ngắn → dài), trong cùng leadtime sắp theo số DO. Ngày TB = số ngày từ xe lấy đến hoàn tất, so với leadtime cam kết (tối đa).</div>
       <div id="byProv"></div>
     </div>
     <div class="card">
@@ -311,18 +312,22 @@ function trend(){
 }
 
 function gtable(el, key, label, showLt){
-  const G = group(key);
+  const ltk = g => { const m = /(\d+)-(\d+)/.exec([...g.lts][0]||''); return m ? (+m[2])*100 + (+m[1]) : 9999; };
+  const G = showLt ? group(key).sort((a,b)=>ltk(a)-ltk(b) || b.n-a.n) : group(key);
+  let curLt = null;
   const max = Math.max(...G.map(g=>g.n));
   let h = `<div class="scroll" style="max-height:440px"><table><thead><tr><th>${label}</th><th class="r">DO</th><th style="width:34%">Đúng · Sai · Chưa</th><th class="r">% đúng</th><th class="r">% sai</th>${showLt?'<th class="r">Leadtime</th>':''}<th class="r">Ngày TB</th></tr></thead><tbody>`;
   for(const g of G){
     const dn = g.ok+g.bad, r = pct(g.ok,dn), avg = dn? g.sumD/dn : null, w = g.n/max*100;
     const tipTxt = `<b>${esc(g.k)}</b><br>Đúng ${g.ok} · Sai ${g.bad} · Chưa ${g.open}`;
+    if(showLt && [...g.lts][0] !== curLt){ curLt = [...g.lts][0]; const gs = G.filter(x=>[...x.lts][0]===curLt), n = gs.reduce((t,x)=>t+x.n,0), ok = gs.reduce((t,x)=>t+x.ok,0), dn = gs.reduce((t,x)=>t+x.ok+x.bad,0);
+      h += `<tr class="grp click" ${dr('Leadtime '+curLt, r=>r.lt===curLt)}><td colspan="7">Leadtime ${esc(curLt)} · ${n} DO${dn?` · đúng ${fp(pct(ok,dn))} · sai ${fp(pct(dn-ok,dn))}`:''}</td></tr>`; }
     const K = g.k, lb = label+': '+K;
     const seg = (v,col,t,f) => v ? `<span style="width:${v/g.n*100}%;background:${col}" ${dr(lb+' · '+t, r=>r[key]===K && f(r))} data-tip="${esc(`<b>${esc(K)}</b><br>${t}: ${v} DO`)}"></span>` : '';
     h += `<tr class="click" ${dr(lb, r=>r[key]===K)}><td>${esc(K)}</td><td class="r num">${g.n}</td><td><div class="bar" style="width:${Math.max(w,8)}%;min-width:0">${seg(g.ok,'var(--ok)','Đúng cam kết',r=>r.td==='ĐÚNG CAM KẾT')}${seg(g.bad,'var(--bad)','Sai cam kết',r=>r.td==='SAI CAM KẾT')}${seg(g.open,'var(--wait)','Chưa hoàn tất',r=>!r.done)}</div></td>`
       + `<td class="r num"><span class="pill ${dn? (r>=90?'p-ok':r>=70?'p-warn':'p-bad') : 'p-wait'}" ${dr(lb+' · Đúng cam kết', r=>r[key]===K && r.td==='ĐÚNG CAM KẾT')}>${dn?fp(r):'–'}</span></td>`
       + `<td class="r num"><span class="pill ${dn&&g.bad? 'p-bad':'p-wait'}" ${dr(lb+' · Sai cam kết', r=>r[key]===K && r.td==='SAI CAM KẾT')}>${dn?fp(100-r):'–'}</span></td>`
-      + (showLt?`<td class="r num">${esc([...g.lts].join(', '))}</td>`:'')
+      + (showLt?`<td class="r num" style="white-space:nowrap">${esc([...g.lts].join(', '))}</td>`:'')
       + `<td class="r num">${avg==null?'–':f1(avg)}</td></tr>`;
   }
   $(el).innerHTML = h+'</tbody></table></div>';
