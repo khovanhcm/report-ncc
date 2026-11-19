@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KAROFI – Báo cáo giao hàng NCC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#12074f; --bg-ink:#fff; --bg-muted:#c9c2ee;
   --panel:#dbd6ef; --panel2:#e8e5f5; --line:#c3bbe0; --ink:#17132e; --muted:#5a5478;
   --accent:#22105f; --accent-ink:#fff;
   --ok:#137a43; --ok-soft:#d6eedf; --bad:#c0262d; --bad-soft:#f6d9dc; --wait:#8a84a8; --wait-soft:#e4e1ef; --warn:#b4530a; --warn-soft:#f6e3cf;
-  --grid:#cfc9e6;
+  --grid:#cfc9e6; --line2:#7a3fd1; --fs:14px;
   --font:"Lexend",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:1.5}
 .wrap{max-width:1360px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:20px}
 h1,h2,h3{margin:0}
 h1{font-size:28px;font-weight:600;color:#fff;line-height:1.2}
@@ -59,10 +59,11 @@ td.c,th.c{text-align:center}
 .bar span{display:block;height:100%}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
 .p-ok{background:var(--ok-soft);color:var(--ok)} .p-bad{background:var(--bad-soft);color:var(--bad)} .p-wait{background:var(--wait-soft);color:#4a4566} .p-warn{background:var(--warn-soft);color:var(--warn)}
-.scroll{max-height:520px;overflow:auto;border-radius:10px;background:#fff}
-.scroll table td{background:#fff}
+.scroll{max-height:520px;overflow:auto;border-radius:10px;background:var(--panel2)}
+.scroll table td{background:var(--panel2)}
+.scroll table th{background:var(--panel)}
 .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-select,input{font-family:var(--font);font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+select,input{font-family:var(--font);font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--ink)}
 button{font-family:var(--font);font-size:13px;font-weight:600;padding:7px 14px;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
 button:hover{filter:brightness(1.25)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
@@ -70,16 +71,26 @@ button:hover{filter:brightness(1.25)}
 .tabs button.on{background:var(--accent);color:#fff}
 .tip{position:fixed;pointer-events:none;background:#17132e;color:#fff;font-size:12px;padding:6px 9px;border-radius:6px;opacity:0;transition:opacity .1s;z-index:10;white-space:nowrap}
 #detail td,#detail th,#todo td{white-space:nowrap}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.btn-ghost{background:transparent;border:1px solid var(--bg-muted);color:var(--bg-ink)}
+.cust{position:fixed;top:0;right:0;height:100%;width:320px;max-width:92vw;background:var(--panel2);color:var(--ink);box-shadow:-6px 0 24px rgba(0,0,0,.3);padding:18px;overflow:auto;transform:translateX(105%);transition:transform .2s;z-index:20}
+.cust.on{transform:none}
+.cust h2{margin-bottom:12px}
+.cust .row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:13px}
+.cust .row input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}
+.cust .presets{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.cust .presets button{font-size:12px;padding:8px 6px}
+.cust hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 .foot{color:var(--bg-muted);font-size:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
+  <header class="hdr"><div>
     <div class="eyebrow">Báo cáo giao hàng nhà cung cấp</div>
     <h1>KAROFI · Tiến độ giao hàng &amp; chứng từ</h1>
     <div class="stamp" id="stamp"></div>
-  </header>
+  </div><button class="btn-ghost" id="btnCust">⚙ Tuỳ chỉnh giao diện</button></header>
 
   <section class="kpis" id="kpis"></section>
 
@@ -88,7 +99,7 @@ button:hover{filter:brightness(1.25)}
   <section class="card">
     <h2>Tiến độ theo ngày xe lấy</h2>
     <div class="sub">Số DO mỗi ngày xe lấy hàng, chia theo kết quả cam kết. Đường tím: tỉ lệ đúng cam kết trên số DO đã hoàn tất.</div>
-    <div class="legend"><span><i style="background:var(--ok)"></i>Đúng cam kết</span><span><i style="background:var(--bad)"></i>Sai cam kết</span><span><i style="background:var(--wait)"></i>Chưa hoàn tất</span><span><i style="background:#7a3fd1;height:3px;width:14px"></i>% đúng cam kết</span></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>Đúng cam kết</span><span><i style="background:var(--bad)"></i>Sai cam kết</span><span><i style="background:var(--wait)"></i>Chưa hoàn tất</span><span><i style="background:var(--line2);height:3px;width:14px"></i>% đúng cam kết</span></div>
     <div id="trend"></div>
   </section>
 
@@ -107,8 +118,8 @@ button:hover{filter:brightness(1.25)}
 
   <section class="grid g32">
     <div class="card">
-      <h2>Mức lệch so với leadtime cam kết</h2>
-      <div class="sub">DO đã hoàn tất: số ngày giao thực tế trừ leadtime tối đa. ≤ 0 là đúng cam kết.</div>
+      <h2>Tỉ lệ cam kết leadtime</h2>
+      <div class="sub">Trên số DO đã hoàn tất giao hàng.</div>
       <div id="dev"></div>
     </div>
     <div class="card">
@@ -144,6 +155,17 @@ button:hover{filter:brightness(1.25)}
 
   <div class="foot" id="foot"></div>
 </div>
+<aside class="cust" id="cust" aria-label="Tuỳ chỉnh giao diện">
+  <div class="hdr"><h2>Tuỳ chỉnh giao diện</h2><button class="btn-ghost" id="custClose" style="color:var(--ink);border-color:var(--line)">✕</button></div>
+  <div class="small muted" style="margin-bottom:6px">Chủ đề có sẵn</div>
+  <div class="presets" id="presets"></div>
+  <hr><div class="small muted">Màu</div><div id="colors"></div>
+  <hr>
+  <div class="row"><span>Font chữ</span><select id="cFont"><option>Lexend</option><option>Be Vietnam Pro</option><option>Roboto</option><option>Arial</option></select></div>
+  <div class="row"><span>Cỡ chữ</span><select id="cFs"><option value="13px">Nhỏ</option><option value="14px">Vừa</option><option value="15.5px">Lớn</option></select></div>
+  <hr><button id="cReset" style="width:100%">Khôi phục mặc định</button>
+  <div class="small muted" style="margin-top:8px">Tuỳ chỉnh được lưu trên trình duyệt này.</div>
+</aside>
 <div class="tip" id="tip"></div>
 
 <script>
@@ -238,7 +260,7 @@ function trend(){
   const y = v => mt+ih-v/top*ih, yp = p => mt+ih-p/100*ih;
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Tiến độ theo ngày xe lấy">`;
   for(let v=0; v<=top; v+=step) s += `<line x1="${ml}" x2="${W-mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${ml-6}" y="${y(v)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${v}</text>`;
-  for(let p=0;p<=100;p+=25) s += `<text x="${W-mr+6}" y="${yp(p)+4}" font-size="11" fill="#7a3fd1">${p}%</text>`;
+  for(let p=0;p<=100;p+=25) s += `<text x="${W-mr+6}" y="${yp(p)+4}" font-size="11" fill="var(--line2)">${p}%</text>`;
   const pts=[];
   D.forEach((d,i)=>{
     const x = ml+i*bw+bw*0.18, w = bw*0.64; let base = 0;
@@ -249,8 +271,8 @@ function trend(){
     s += `<text x="${x+w/2}" y="${H-mb+16}" font-size="11" text-anchor="middle" fill="var(--muted)">${lab}</text>`;
     if(d.ok+d.bad) pts.push([x+w/2, yp(pct(d.ok,d.ok+d.bad))]);
   });
-  s += `<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#7a3fd1" stroke-width="2"/>`;
-  pts.forEach(p=> s += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#7a3fd1"/>`);
+  s += `<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--line2)" stroke-width="2"/>`;
+  pts.forEach(p=> s += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--line2)"/>`);
   $('#trend').innerHTML = s+'</svg>';
 }
 
@@ -270,17 +292,18 @@ function gtable(el, key, label, showLt){
 }
 
 function dev(){
-  const done = rows.filter(r=>r.done);
-  const bins = [['≤ -2',r=>r.over<=-2],['-1',r=>r.over===-1],['0',r=>r.over===0],['+1',r=>r.over===1],['+2',r=>r.over===2],['+3',r=>r.over===3],['≥ +4',r=>r.over>=4]];
-  const D = bins.map(([l,f])=>({l,v:done.filter(f).length,late:l.includes('+')}));
-  const W=560,H=240,ml=36,mt=18,mb=36,iw=W-ml-10,ih=H-mt-mb,bw=iw/D.length,max=Math.max(...D.map(d=>d.v));
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Phân bố lệch leadtime">`;
-  s+=`<line x1="${ml}" x2="${W-10}" y1="${mt+ih}" y2="${mt+ih}" stroke="var(--grid)"/>`;
-  D.forEach((d,i)=>{ const h=d.v/max*ih, x=ml+i*bw+bw*.15, w=bw*.7;
-    s+=`<rect x="${x}" y="${mt+ih-h}" width="${w}" height="${h}" rx="2" fill="${d.late?'var(--bad)':'var(--ok)'}" data-tip="${esc(`Lệch ${d.l} ngày: ${d.v} DO (${fp(pct(d.v,done.length))})`)}"/>`;
-    s+=`<text x="${x+w/2}" y="${mt+ih-h-5}" font-size="11.5" text-anchor="middle" fill="var(--ink)">${d.v}</text>`;
-    s+=`<text x="${x+w/2}" y="${H-mb+16}" font-size="11.5" text-anchor="middle" fill="var(--muted)">${d.l}</text>`; });
-  s+=`<text x="${ml+iw/2}" y="${H-4}" font-size="11" text-anchor="middle" fill="var(--muted)">Số ngày lệch so với leadtime tối đa</text>`;
+  const ok = rows.filter(r=>r.td==='ĐÚNG CAM KẾT').length, bad = rows.filter(r=>r.td==='SAI CAM KẾT').length, n = ok+bad;
+  const R=110, r=68, cx=150, cy=140, W=520, H=280;
+  const arc = (a0,a1,col,t) => { const p=(a,rr)=>[cx+rr*Math.sin(a), cy-rr*Math.cos(a)]; const L=a1-a0>Math.PI?1:0;
+    const [x0,y0]=p(a0,R),[x1,y1]=p(a1,R),[x2,y2]=p(a1,r),[x3,y3]=p(a0,r);
+    return `<path d="M${x0},${y0} A${R},${R} 0 ${L} 1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${L} 0 ${x3},${y3}Z" fill="${col}" stroke="var(--panel)" stroke-width="2" data-tip="${esc(t)}"/>`; };
+  const aOk = ok/n*2*Math.PI;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:560px;display:block;margin:auto" role="img" aria-label="Tỉ lệ đúng/sai cam kết">`;
+  s += arc(0, Math.min(aOk, 2*Math.PI-1e-4), 'var(--ok)', `Đúng cam kết: ${ok} DO (${fp(pct(ok,n))})`);
+  if(bad) s += arc(aOk, 2*Math.PI-1e-4, 'var(--bad)', `Sai cam kết: ${bad} DO (${fp(pct(bad,n))})`);
+  s += `<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="30" font-weight="600" fill="var(--ok)">${fp(pct(ok,n))}</text><text x="${cx}" y="${cy+26}" text-anchor="middle" font-size="12" fill="var(--muted)">đúng cam kết</text>`;
+  const item = (y,col,lab,v) => `<rect x="300" y="${y-12}" width="14" height="14" rx="3" fill="${col}"/><text x="324" y="${y}" font-size="14" fill="var(--ink)">${lab}</text><text x="324" y="${y+26}" font-size="24" font-weight="600" fill="${col}">${v}</text><text x="${324+String(v).length*15+8}" y="${y+26}" font-size="13" fill="var(--muted)">DO · ${fp(pct(v,n))}</text>`;
+  s += item(100,'var(--ok)','Đúng cam kết',ok) + item(178,'var(--bad)','Sai cam kết',bad);
   $('#dev').innerHTML = s+'</svg>';
 }
 
@@ -344,6 +367,37 @@ $('#btnX').onclick = exportX;
 
 stamp(); const S = kpis(); insight(S); trend(); gtable('#byProv','tinhLT','Tỉnh nhận',true); gtable('#byKho','khoTT','Kho TT phát cuối',false); dev(); status(S); todo(); initFilters(); detail();
 $('#foot').innerHTML = `Quy tắc: Trạng thái giao hàng đối chiếu bill giao hàng với 2.DATA BILL · Ngày hoàn tất = ngày cập nhật trạng thái khi "5 - Hoàn tất giao hàng" · Leadtime theo 4.LEADTIME (Long An → tỉnh nhận) · Đúng cam kết khi số ngày từ xe lấy đến hoàn tất ≤ leadtime tối đa · Dữ liệu booking đến ${CUT_BOOKING}.`;
+
+// ---- tuỳ chỉnh giao diện
+const CV = [['--bg','Nền trang'],['--panel','Thẻ'],['--panel2','Thẻ phụ'],['--ink','Chữ'],['--accent','Nút'],['--ok','Đúng cam kết'],['--bad','Sai cam kết'],['--wait','Chưa hoàn tất'],['--line2','Đường % đúng']];
+const PRE = {
+  'Chàm · Oải hương':{'--bg':'#12074f','--bg-ink':'#ffffff','--bg-muted':'#c9c2ee','--panel':'#dbd6ef','--panel2':'#e8e5f5','--line':'#c3bbe0','--ink':'#17132e','--muted':'#5a5478','--accent':'#22105f','--grid':'#cfc9e6','--ok':'#137a43','--bad':'#c0262d','--wait':'#8a84a8','--line2':'#7a3fd1'},
+  'Sáng':{'--bg':'#eef1f6','--bg-ink':'#14213d','--bg-muted':'#5b6478','--panel':'#ffffff','--panel2':'#f5f7fb','--line':'#dde2ec','--ink':'#14213d','--muted':'#5b6478','--accent':'#1d4ed8','--grid':'#e3e7ef','--ok':'#15803d','--bad':'#dc2626','--wait':'#94a3b8','--line2':'#7c3aed'},
+  'Tối':{'--bg':'#0d1117','--bg-ink':'#e6edf3','--bg-muted':'#8b949e','--panel':'#161b22','--panel2':'#1f2630','--line':'#30363d','--ink':'#e6edf3','--muted':'#8b949e','--accent':'#2f81f7','--grid':'#2a313b','--ok':'#3fb950','--bad':'#f85149','--wait':'#6e7681','--line2':'#d2a8ff'},
+  'Xanh ngọc':{'--bg':'#0b3b36','--bg-ink':'#ffffff','--bg-muted':'#a8d5cc','--panel':'#e3f1ee','--panel2':'#f0f8f6','--line':'#bcdcd5','--ink':'#10241f','--muted':'#4d6b64','--accent':'#0b6b5d','--grid':'#cbe3dd','--ok':'#1b7f3b','--bad':'#c2410c','--wait':'#8fa8a2','--line2':'#0e7490'},
+};
+const DEF = {preset:'Chàm · Oải hương', vars:{}, font:'Lexend', fs:'14px'};
+let CFG = DEF;
+try{ CFG = Object.assign({}, DEF, JSON.parse(localStorage.getItem('karofi-ui')||'{}')); }catch(e){}
+function applyUI(){
+  const root = document.documentElement.style, v = Object.assign({}, PRE[CFG.preset]||PRE[DEF.preset], CFG.vars);
+  for(const k in v) root.setProperty(k, v[k]);
+  root.setProperty('--font', `"${CFG.font}",system-ui,"Segoe UI",Roboto,Arial,sans-serif`);
+  root.setProperty('--fs', CFG.fs);
+  $('#colors').innerHTML = CV.map(([k,l])=>`<label class="row"><span>${l}</span><input type="color" data-v="${k}" value="${v[k]}"></label>`).join('');
+  $('#colors').querySelectorAll('input').forEach(i=>i.oninput=()=>{ CFG.vars[i.dataset.v]=i.value; document.documentElement.style.setProperty(i.dataset.v,i.value); save(); });
+  $('#presets').innerHTML = Object.keys(PRE).map(p=>`<button class="${p===CFG.preset?'':'btn-ghost'}" style="${p===CFG.preset?'':'color:var(--ink);border-color:var(--line)'}" data-p="${p}">${p}</button>`).join('');
+  $('#presets').querySelectorAll('button').forEach(b=>b.onclick=()=>{ CFG.preset=b.dataset.p; CFG.vars={}; save(); applyUI(); });
+  $('#cFont').value = CFG.font; $('#cFs').value = CFG.fs;
+  setTimeout(trend, 60);
+}
+function save(){ try{ localStorage.setItem('karofi-ui', JSON.stringify(CFG)); }catch(e){} }
+$('#cFont').onchange = e => { CFG.font=e.target.value; save(); applyUI(); };
+$('#cFs').onchange = e => { CFG.fs=e.target.value; save(); applyUI(); };
+$('#cReset').onclick = () => { CFG = JSON.parse(JSON.stringify(DEF)); save(); applyUI(); };
+$('#btnCust').onclick = () => $('#cust').classList.add('on');
+$('#custClose').onclick = () => $('#cust').classList.remove('on');
+applyUI();
 let rt; addEventListener('resize',()=>{clearTimeout(rt); rt=setTimeout(trend,150);});
 </script>
 </body>
