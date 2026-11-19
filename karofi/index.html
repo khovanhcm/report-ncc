@@ -121,6 +121,18 @@ h2.tg:hover{color:var(--accent)}
 .open>.cbody{display:block}
 .tgall{display:flex;gap:8px;justify-content:flex-end;margin-bottom:-8px}
 @media print{.cbody{display:block!important}}
+.ag-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:900px){.ag-cards{grid-template-columns:1fr}}
+.ag-card{background:var(--panel2);border-radius:12px;padding:14px 16px;border-left:4px solid var(--accent)}
+.ag-card.wide{grid-column:span 3}
+@media(max-width:900px){.ag-card.wide{grid-column:auto}}
+.ag-card p{margin:4px 0}
+.ag-t{font-weight:600;font-size:15px;margin-bottom:6px}
+.ag-q{color:var(--accent);font-weight:600}
+.flow.row{flex-direction:row;align-items:stretch;gap:8px}
+.flow.row .st{flex:1;background:var(--panel)}
+.flow.row .ar{display:flex;align-items:center;font-size:18px}
+@media(max-width:900px){.flow.row{flex-direction:column}}
 .foot{color:var(--bg-muted);font-size:12px}
 </style>
 </head>
@@ -200,27 +212,36 @@ h2.tg:hover{color:var(--accent)}
   <section class="card" id="agree">
     <h2>Khó khăn &amp; đề xuất của Thợ Điện Máy Xanh</h2>
     <div class="sub">Nội dung thống nhất phối hợp giữa Thợ Điện Máy Xanh và KAROFI.</div>
-    <div class="grid g2">
-      <div>
-        <ol class="ag-list">
-          <li><b>Giao điểm khách hàng ngoài</b>, bao gồm cả đối thủ của Thợ Điện Máy Xanh. Đề xuất: chỉ nhận đơn giao điểm của Thợ Điện Máy Xanh.</li>
-          <li><b>Đơn phát sinh thu hồi</b>: ghi chú ở cột riêng.</li>
-          <li><b>Booking đơn gấp</b>: NCC ghi rõ đơn gấp để Thợ Điện Máy Xanh xử lý leadtime.</li>
-        </ol>
-        <h3 class="ag-h">Giờ chốt booking của NCC</h3>
-        <table class="ag-tb"><thead><tr><th>Loại đơn</th><th>NCC booking trước</th><th>Thợ Điện Máy Xanh lấy hàng</th></tr></thead>
-          <tbody><tr><td>Đơn không gấp</td><td class="num"><b>16:00</b> ngày N</td><td><b>N+1</b></td></tr>
-          <tr><td>Đơn gấp</td><td class="num"><b>17:00</b> ngày N</td><td><b>N+1</b></td></tr></tbody></table>
+    <div class="ag-cards">
+      <div class="ag-card">
+        <div class="ag-t">Giao điểm khách hàng ngoài</div>
+        <p>Điểm giao bao gồm cả đối thủ của Thợ Điện Máy Xanh.</p>
+        <p class="ag-q">Đề xuất: chỉ nhận đơn của Thợ Điện Máy Xanh được hay không?</p>
       </div>
-      <div>
-        <h3 class="ag-h" style="margin-top:0">Xử lý phát sinh khi Thợ Điện Máy Xanh nhận hàng ngoài Thợ Điện Máy Xanh</h3>
-        <div class="flow">
-          <div class="st"><span class="n">1</span><div><b>Thợ Điện Máy Xanh báo KAROFI</b><br><span class="muted small">Ngay tại thời điểm phát sinh</span></div></div>
-          <div class="ar">↓</div>
-          <div class="st hot"><span class="n">2</span><div><b>KAROFI phản hồi hướng xử lý</b><br><span class="muted small">Trong vòng <b>30 phút</b>. Nếu KAROFI yêu cầu Thợ Điện Máy Xanh gửi mail, KAROFI phản hồi qua mail trong 30 phút.</span></div></div>
-          <div class="ar">↓</div>
-          <div class="st"><span class="n">3</span><div><b>Thợ Điện Máy Xanh xử lý theo phản hồi</b></div></div>
+      <div class="ag-card">
+        <div class="ag-t">Phát sinh thu hồi</div>
+        <p>Cần ghi chú ở <b>cột ghi chú riêng</b>.</p>
+      </div>
+      <div class="ag-card">
+        <div class="ag-t">Booking đơn hàng gấp</div>
+        <p>Cần thông tin rõ là đơn gấp để Thợ Điện Máy Xanh xử lý leadtime.</p>
+      </div>
+      <div class="ag-card wide">
+        <div class="ag-t">Trường hợp Thợ Điện Máy Xanh nhận hàng ngoài Thợ Điện Máy Xanh</div>
+        <div class="flow row">
+          <div class="st"><span class="n">1</span><div><b>Thợ Điện Máy Xanh thông tin cho KAROFI</b><br><span class="muted small">Ngay tại thời điểm phát sinh</span></div></div>
+          <div class="ar">→</div>
+          <div class="st hot"><span class="n">2</span><div><b>KAROFI phản hồi hướng xử lý</b><br><span class="muted small">Trong vòng <b>30 phút</b></span></div></div>
+          <div class="ar">→</div>
+          <div class="st"><span class="n">3</span><div><b>Thợ Điện Máy Xanh xử lý</b><br><span class="muted small">Theo thông tin KAROFI phản hồi</span></div></div>
         </div>
+        <p style="margin-top:10px">Nếu KAROFI yêu cầu Thợ Điện Máy Xanh gửi mail → KAROFI cần <b>phản hồi qua mail trong vòng 30 phút</b>.</p>
+      </div>
+      <div class="ag-card wide">
+        <div class="ag-t">Thời gian NCC booking</div>
+        <table class="ag-tb"><thead><tr><th>Loại đơn</th><th>NCC booking</th><th>Thợ Điện Máy Xanh lấy hàng</th></tr></thead>
+          <tbody><tr><td>Đơn hàng không gấp</td><td class="num">Trước <b>16g00</b></td><td><b>N+1</b></td></tr>
+          <tr><td>Đơn hàng gấp</td><td class="num">Báo trước <b>17g00</b></td><td><b>N+1</b></td></tr></tbody></table>
       </div>
     </div>
     <h3 class="ag-h">Việc cần làm</h3>
