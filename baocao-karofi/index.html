@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Báo cáo giao hàng · KAROFI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font:"Be Vietnam Pro",system-ui,"Segoe UI",Arial,sans-serif;
+  --bg:#F3F5F4; --ink:#14201C; --hmuted:#5E6B66;
+  --card:#FFFFFF; --card-ink:#14201C; --muted:#5E6B66; --line:rgba(0,0,0,.12); --soft:#EEF3F1;
+  --accent:#0B6B5D; --on-accent:#FFFFFF;
+  --ok:#1F7A4D; --ok-bg:#E3F3EA; --bad:#C0392B; --bad-bg:#FBE6E2; --wait:#D9922E; --wait-bg:#FFF1DC;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding:26px 16px 48px}
+.eyebrow{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+header .eyebrow,header .sub,footer{color:var(--hmuted)}
+header h1{margin:4px 0 2px;font-size:1.7rem;line-height:1.2}
+header .sub{font-size:.88rem}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:18px 0 14px}
+.bar .grp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn,select,input[type=search]{font:inherit;font-size:.88rem;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--card-ink);padding:8px 14px}
+.btn{cursor:pointer;font-weight:600}
+.btn.on,.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.card{background:var(--card);color:var(--card-ink);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h2{margin:0 0 2px;font-size:1.05rem}
+.card .sub{font-size:.82rem;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi .l{font-size:.82rem;color:var(--muted);font-weight:600}
+.kpi .n{font-size:1.9rem;font-weight:700;line-height:1.15;margin-top:4px}
+.kpi .n small{font-size:.95rem;color:var(--muted);font-weight:600}
+.kpi .s{font-size:.8rem;color:var(--muted);margin-top:2px}
+.kpi.big .n{color:var(--accent)}
+.meter{height:8px;border-radius:99px;background:var(--soft);margin-top:8px;position:relative;overflow:visible}
+.meter i{display:block;height:100%;border-radius:99px;background:var(--ok)}
+.meter b{position:absolute;top:-4px;width:2px;height:16px;background:var(--card-ink)}
+.grid2{display:grid;grid-template-columns:1.55fr 1fr;gap:12px;margin-top:12px}
+.lg{display:flex;justify-content:center;gap:18px;font-size:.82rem;margin-top:4px}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+svg text{fill:var(--muted);font-size:11px;font-family:var(--font)}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.03em;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--card);position:sticky;top:0}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:hover td{background:color-mix(in srgb,var(--soft) 55%,transparent)}
+.scroll{overflow:auto;max-height:560px;margin-top:10px;border-radius:8px}
+.pill{display:inline-block;font-size:.74rem;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}.p-bad{background:var(--bad-bg);color:var(--bad)}.p-wait{background:var(--wait-bg);color:#8A5300}.p-na{background:var(--soft);color:var(--muted)}
+.dhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:12px}
+.dhead .grp{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pager{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:.84rem;color:var(--muted)}
+.tip{position:fixed;pointer-events:none;background:var(--card-ink);color:var(--card);padding:5px 9px;border-radius:6px;font-size:.78rem;display:none;z-index:9}
+.load{padding:60px 0;text-align:center;color:var(--hmuted)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--card-ink);color:var(--card);padding:9px 16px;border-radius:10px;font-size:.86rem;display:none;z-index:10}
+footer{margin-top:22px;font-size:.78rem;text-align:center}
+@media (max-width:980px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Thợ Điện Máy Xanh · Kho vận Hồ Chí Minh</div>
+    <h1>Báo cáo giao hàng · KAROFI</h1>
+    <div class="sub" id="sub">Đang tải dữ liệu…</div>
+  </header>
+  <div id="app" style="display:none">
+    <div class="bar">
+      <div class="grp" id="per"></div>
+      <div class="grp"><button class="btn primary" id="xAll">Xuất Excel đối chiếu</button></div>
+    </div>
+    <section class="kpis" id="kpis"></section>
+    <div class="grid2">
+      <section class="card"><h2>Kết quả giao hàng theo ngày lấy hàng</h2><div class="sub" id="cSub"></div><div id="chart"></div>
+        <div class="lg"><span><i style="background:var(--ok)"></i>Đúng cam kết</span><span><i style="background:var(--bad)"></i>Sai cam kết</span><span><i style="background:var(--wait)"></i>Chưa hoàn tất</span></div></section>
+      <section class="card"><h2>Theo tỉnh nhận hàng</h2><div class="sub">Thời gian dự kiến theo leadtime cam kết (gửi từ Long An)</div>
+        <div class="scroll" style="max-height:330px"><table id="prov"></table></div></section>
+    </div>
+    <section class="card" style="margin-top:12px">
+      <h2>Chi tiết đơn hàng theo DO</h2>
+      <div class="sub">Mỗi dòng là 1 DO. Đúng cam kết khi số ngày từ ngày lấy hàng đến ngày hoàn tất không vượt thời gian dự kiến.</div>
+      <div class="dhead">
+        <div class="grp">
+          <input id="q" type="search" placeholder="Tìm DO, mã bill, mã PO, kho nhận…" style="min-width:280px">
+          <select id="fs"><option value="">Tất cả trạng thái</option><option value="ok">Đúng cam kết</option><option value="bad">Sai cam kết</option><option value="done">Đã hoàn tất</option><option value="wait">Chưa hoàn tất</option><option value="over">Chưa hoàn tất · quá thời gian dự kiến</option></select>
+        </div>
+        <div class="grp"><span class="sub" id="cnt"></span><button class="btn" id="xView">Xuất Excel danh sách đang lọc</button></div>
+      </div>
+      <div class="scroll"><table id="det"></table></div>
+      <div class="pager" id="pager"></div>
+    </section>
+    <footer id="foot"></footer>
+  </div>
+  <div class="load" id="load">Đang tải dữ liệu…</div>
+</div>
+<div class="tip" id="tip"></div><div class="toast" id="toast"></div>
+<script>
+(function(){
+var API='https:\/\/script.google.com/macros/s/AKfycbzRAMaclrPMA6xTRAS0ber2mcQk9YmSr3Fcre-MO2cbpNquWsgleVTP1Hh3Pzome1-R/exec';
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var K=new URLSearchParams(location.search).get('k')||'';
+// Leadtime cam kết KAROFI (gửi từ Long An) theo tỉnh nhận – [hiển thị, số ngày tối đa]
+var LT={'CAN THO':['1-2 ngày',2],'DA NANG':['3-5 ngày',5],'DAK LAK':['3-5 ngày',5],'DONG THAP':['1-2 ngày',2],'KHANH HOA':['2-4 ngày',4],
+ 'HO CHI MINH':['1-2 ngày',2],'TP.HCM':['1-2 ngày',2],'LAM DONG':['3-5 ngày',5],'QUANG NGAI':['4-6 ngày',6],'DONG NAI':['2-4 ngày',4],'AN GIANG':['2-4 ngày',4],
+ 'CA MAU':['2-4 ngày',4],'VINH LONG':['1-2 ngày',2],'TAY NINH':['1-2 ngày',2],'GIA LAI':['4-6 ngày',6],'HUE':['4-6 ngày',6],'THUA THIEN HUE':['4-6 ngày',6],
+ 'QUANG TRI':['5-7 ngày',7],'BINH DINH':['4-6 ngày',6],'PHU YEN':['4-6 ngày',6],'BINH DUONG':['1-3 ngày',3],'PHU QUOC':['2-4 ngày',4]};
+var DISP={'CAN THO':'Thành phố Cần Thơ','DA NANG':'Thành phố Đà Nẵng','DAK LAK':'Tỉnh Đắk Lắk','DONG THAP':'Tỉnh Đồng Tháp','KHANH HOA':'Tỉnh Khánh Hòa','HO CHI MINH':'Thành phố Hồ Chí Minh','LAM DONG':'Tỉnh Lâm Đồng','QUANG NGAI':'Tỉnh Quảng Ngãi','DONG NAI':'Tỉnh Đồng Nai','AN GIANG':'Tỉnh An Giang','CA MAU':'Tỉnh Cà Mau','VINH LONG':'Tỉnh Vĩnh Long','TAY NINH':'Tỉnh Tây Ninh','GIA LAI':'Tỉnh Gia Lai','HUE':'Thành phố Huế','QUANG TRI':'Tỉnh Quảng Trị','BINH DINH':'Bình Định','PHU YEN':'Phú Yên','BINH DUONG':'Bình Dương','PHU QUOC':'Phú Quốc (An Giang)'};
+var TARGET_DATE=new Date(2026,11,1); // từ 01/12/2026 cam kết 100%
+function nk(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toUpperCase().replace(/^(TINH|THANH PHO|TP\.?)\s+/,'').trim()}
+function pd(s){var m=/(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s||'');return m?new Date(+m[3],m[2]-1,+m[1]):null}
+function fd(d){return d?('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear():''}
+var now=new Date(),TODAY=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+var ALL=[],state={per:'30',page:1},VIEW=[];
+
+if(!K){$('load').textContent='Link thiếu mã báo cáo. Vui lòng liên hệ Kho vận HCM.';return}
+
+function lum(h){var n=parseInt(h.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function ink(h){return lum(h)>.45?'#14201C':'#F4F6F5'}
+function theme(t){if(!t)return;var R=document.documentElement.style;
+  if(t.bg){R.setProperty('--bg',t.bg);R.setProperty('--ink',ink(t.bg));R.setProperty('--hmuted',lum(t.bg)>.45?'#5E6B66':'#C3C8D6')}
+  if(t.card){R.setProperty('--card',t.card);R.setProperty('--card-ink',ink(t.card));R.setProperty('--muted',lum(t.card)>.45?'#565E6E':'#B9C2BE');R.setProperty('--line',lum(t.card)>.45?'rgba(0,0,0,.12)':'rgba(255,255,255,.16)')}
+  if(t.tile)R.setProperty('--soft',t.tile);
+  if(t.ac){R.setProperty('--accent',t.ac);R.setProperty('--on-accent',ink(t.ac))}
+  if(t.font)R.setProperty('--font',t.font);if(t.size)document.body.style.fontSize=t.size+'px';}
+
+fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).then(function(D){
+  if(D.error){$('load').textContent=D.error;return}
+  theme(D.THEME);
+  var dict=D.DICT||[],B=D.BILLS||{},map={};
+  (D.ROWS||[]).forEach(function(r){
+    var dno=String(r[11]||'').trim(),bill=r[4]||'',po=r[2]||'';if(!dno&&!bill&&!po)return;
+    var key=dno||(po+'|'+bill),o=map[key];
+    if(!o){var addr=dict[r[5]]||'',prov=r[8]<0?'':dict[r[8]];
+      o=map[key]={do:dno,bill:bill,po:po,b:pd(r[0]),p:pd(r[1]),kho:addr.replace(/^\d+\s*-?\s*/,''),prov:prov,n:0};}
+    o.n++;if(!o.p&&r[1])o.p=pd(r[1]);if(!o.bill&&bill)o.bill=bill;
+  });
+  ALL=Object.values(map).map(function(o){
+    var s=B[o.bill]||[],st=s[0]||'',done=pd(s[1]||'');
+    var key=nk(o.prov),lt=LT[key]||null;
+    if(!lt){var kk=nk(o.kho);Object.keys(LT).some(function(x){if(kk.indexOf(x)>=0){lt=LT[x];if(!o.prov)o.prov=DISP[x]||'';return true}})}
+    o.st=st||(o.bill?'Chưa có dữ liệu':'Chưa có mã bill');o.done=done;o.lt=lt?lt[0]:'';o.ltMax=lt?lt[1]:null;
+    o.days=(done&&o.p)?Math.round((done-o.p)/864e5):null;
+    if(done){o.res=(o.ltMax!=null&&o.days!=null)?(o.days<=o.ltMax?'ok':'bad'):'done'}
+    else{o.res=(o.ltMax!=null&&o.p&&Math.round((TODAY-o.p)/864e5)>o.ltMax)?'over':'wait'}
+    return o;
+  }).filter(function(o){return o.b}).sort(function(a,b){return b.b-a.b});
+  $('sub').textContent='Dữ liệu cập nhật lúc '+(D.SNAP||'')+' · Thông tin dành riêng cho KAROFI';
+  $('foot').textContent='Thợ Điện Máy Xanh · Kho vận Hồ Chí Minh. Ngày hoàn tất lấy theo trạng thái "5 - Hoàn tất giao hàng" trên hệ thống vận chuyển. Dữ liệu cập nhật tự động lúc 8:00 hằng ngày.';
+  periods();$('load').remove();$('app').style.display='';render();
+}).catch(function(){$('load').textContent='Không tải được dữ liệu. Vui lòng tải lại trang.'});
+
+function periods(){
+  var ms={};ALL.forEach(function(o){ms[o.b.getFullYear()+'-'+(o.b.getMonth()+1)]=1});
+  var h='<button class="btn on" data-p="30">30 ngày gần nhất</button><select id="pm"><option value="">Chọn tháng…</option>'
+   +Object.keys(ms).sort().reverse().map(function(k){var a=k.split('-');return'<option value="'+k+'">Tháng '+a[1]+'/'+a[0]+'</option>'}).join('')
+   +'</select><button class="btn" data-p="all">Toàn bộ</button>';
+  $('per').innerHTML=h;
+  $('per').addEventListener('click',function(e){var b=e.target.closest('[data-p]');if(!b)return;state.per=b.dataset.p;$('pm').value='';state.page=1;render()});
+  $('per').addEventListener('change',function(e){if(e.target.id==='pm'&&e.target.value){state.per='m:'+e.target.value;state.page=1;render()}});
+}
+function inPer(o){
+  if(state.per==='all')return true;
+  if(state.per==='30'){var a=new Date(TODAY);a.setDate(a.getDate()-29);return o.b>=a&&o.b<=TODAY}
+  var p=state.per.slice(2).split('-');return o.b.getFullYear()==p[0]&&o.b.getMonth()+1==p[1];
+}
+function perText(){if(state.per==='all')return'toàn bộ dữ liệu';if(state.per==='30'){var a=new Date(TODAY);a.setDate(a.getDate()-29);return'30 ngày gần nhất ('+fd(a)+' – '+fd(TODAY)+')'}var p=state.per.slice(2).split('-');return'tháng '+p[1]+'/'+p[0]}
+var RES={ok:['Đúng cam kết','p-ok'],bad:['Sai cam kết','p-bad'],done:['Hoàn tất (chưa có leadtime)','p-na'],wait:['Chưa hoàn tất','p-wait'],over:['Chưa hoàn tất · quá dự kiến','p-bad']};
+function pct(a,b){return b?Math.round(a/b*1000)/10:0}
+function render(){
+  document.querySelectorAll('#per .btn').forEach(function(b){b.classList.toggle('on',b.dataset.p===state.per)});
+  var R=ALL.filter(inPer),done=R.filter(function(o){return o.done}),ok=R.filter(function(o){return o.res==='ok'}),bad=R.filter(function(o){return o.res==='bad'}),
+      wait=R.filter(function(o){return!o.done}),over=R.filter(function(o){return o.res==='over'});
+  var judged=ok.length+bad.length,rate=pct(ok.length,judged),target=TODAY<TARGET_DATE?85:100;
+  $('kpis').innerHTML=
+   kpi('Tổng DO',R.length.toLocaleString('vi'),perText(),'')+
+   kpi('Đã hoàn tất giao',done.length.toLocaleString('vi')+' <small>/ '+R.length.toLocaleString('vi')+'</small>',pct(done.length,R.length)+'% số DO','')+
+   kpi('Chưa hoàn tất',wait.length.toLocaleString('vi'),over.length.toLocaleString('vi')+' DO đã quá thời gian dự kiến','')+
+   kpi('Sai cam kết',bad.length.toLocaleString('vi'),'trên '+judged.toLocaleString('vi')+' DO hoàn tất có leadtime','')+
+   '<div class="card kpi big"><div class="l">Tỷ lệ đúng cam kết</div><div class="n">'+rate.toLocaleString('vi')+'%</div><div class="meter"><i style="width:'+Math.min(100,rate)+'%;background:'+(rate>=target?'var(--ok)':'var(--bad)')+'"></i><b style="left:'+target+'%"></b></div><div class="s">Mục tiêu '+target+'%'+(target===85?' (đến 01/12/2026)':'')+'</div></div>';
+  chart(R);prov(R);detail(R);
+}
+function kpi(l,n,s){return'<div class="card kpi"><div class="l">'+l+'</div><div class="n">'+n+'</div><div class="s">'+esc(s)+'</div></div>'}
+function chart(R){
+  var by={};R.forEach(function(o){if(!o.p)return;var k=+o.p;var c=by[k]||(by[k]=[0,0,0]);c[o.res==='ok'?0:o.res==='bad'?1:(o.done?0:2)]+=(o.res==='done'?0:1)});
+  var days=Object.keys(by).map(Number).sort(function(a,b){return a-b}).slice(-12);
+  $('cSub').textContent=days.length?'12 ngày lấy hàng gần nhất trong kỳ · số DO':'Chưa có ngày lấy hàng trong kỳ';
+  var W=720,H=240,L=30,T=18,Bm=24,ph=H-T-Bm,pw=W-L-6,bw=pw/Math.max(1,days.length),max=1;
+  days.forEach(function(d){by[d].forEach(function(v){if(v>max)max=v})});var top=max<=5?5:Math.ceil(max/10)*10;
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Kết quả giao hàng theo ngày">';
+  [0,.5,1].forEach(function(f){var y=T+ph-ph*f;s+='<line x1="'+L+'" x2="'+(W-6)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/><text x="'+(L-5)+'" y="'+(y+4)+'" text-anchor="end">'+Math.round(top*f)+'</text>'});
+  var col=['var(--ok)','var(--bad)','var(--wait)'];
+  days.forEach(function(d,i){var c=by[d],x=L+i*bw,w=Math.min(Math.max(4,(bw-16)/3),22),gx=x+(bw-(w*3+4))/2,dt=new Date(d);
+    if(i%2===0)s+='<rect x="'+x+'" y="'+T+'" width="'+bw+'" height="'+ph+'" fill="var(--soft)" opacity=".55"/>';
+    c.forEach(function(v,j){var hh=v/top*ph,bx=gx+j*(w+2);if(v){s+='<rect x="'+bx+'" y="'+(T+ph-hh)+'" width="'+w+'" height="'+hh+'" rx="'+Math.min(3,hh/2)+'" fill="'+col[j]+'"/><text x="'+(bx+w/2)+'" y="'+(T+ph-hh-4)+'" text-anchor="middle" style="font-weight:600">'+v+'</text>'}});
+    s+='<rect x="'+x+'" y="'+T+'" width="'+bw+'" height="'+ph+'" fill="transparent" data-tip="'+fd(dt)+': Đúng '+c[0]+' · Sai '+c[1]+' · Chưa hoàn tất '+c[2]+'"/>';
+    s+='<text x="'+(x+bw/2)+'" y="'+(H-7)+'" text-anchor="middle">'+dt.getDate()+'/'+(dt.getMonth()+1)+'</text>'});
+  $('chart').innerHTML=s+'</svg>';
+}
+function prov(R){
+  var g={};R.forEach(function(o){var k=o.prov||'Chưa xác định';var x=g[k]||(g[k]={p:k,lt:o.lt,n:0,d:0,ok:0,bad:0});x.n++;if(o.done)x.d++;if(o.res==='ok')x.ok++;if(o.res==='bad')x.bad++;if(!x.lt&&o.lt)x.lt=o.lt});
+  var L2=Object.values(g).sort(function(a,b){return b.n-a.n});window._PV=L2;
+  $('prov').innerHTML='<thead><tr><th>Tỉnh nhận</th><th>Dự kiến</th><th class="num">DO</th><th class="num">Hoàn tất</th><th class="num">Sai</th><th class="num">% đúng</th></tr></thead><tbody>'
+   +L2.map(function(x){var j=x.ok+x.bad;return'<tr><td>'+esc(x.p)+'</td><td style="white-space:nowrap">'+esc(x.lt||'—')+'</td><td class="num">'+x.n+'</td><td class="num">'+x.d+'</td><td class="num">'+(x.bad||'')+'</td><td class="num">'+(j?pct(x.ok,j)+'%':'—')+'</td></tr>'}).join('')+'</tbody>';
+}
+var COLS=[['DO',function(o){return o.do}],['Mã bill',function(o){return o.bill}],['Mã PO',function(o){return o.po}],['Ngày booking',function(o){return fd(o.b)}],['Ngày lấy hàng',function(o){return fd(o.p)}],
+  ['Tên khách hàng',function(o){return o.kho}],['Tỉnh nhận',function(o){return o.prov}],['Thời gian dự kiến',function(o){return o.lt}],['Thời gian hoàn tất',function(o){return fd(o.done)}],
+  ['Số ngày giao',function(o){return o.days==null?'':o.days}],['Trạng thái giao hàng',function(o){return o.st}],['Kết quả cam kết',function(o){return RES[o.res][0]}]];
+function detail(R){
+  var q=$('q').value.trim().toLowerCase(),f=$('fs').value;
+  VIEW=R.filter(function(o){
+    if(f==='ok'&&o.res!=='ok'||f==='bad'&&o.res!=='bad'||f==='done'&&!o.done||f==='wait'&&o.done||f==='over'&&o.res!=='over')return false;
+    return!q||[o.do,o.bill,o.po,o.kho,o.prov,o.st].some(function(x){return x&&String(x).toLowerCase().indexOf(q)>=0})});
+  var per=50,pages=Math.max(1,Math.ceil(VIEW.length/per));if(state.page>pages)state.page=pages;
+  var part=VIEW.slice((state.page-1)*per,state.page*per);
+  $('cnt').textContent=VIEW.length.toLocaleString('vi')+' DO';
+  $('det').innerHTML='<thead><tr>'+COLS.map(function(c){return'<th'+(c[0]==='Số ngày giao'?' class="num"':'')+'>'+c[0]+'</th>'}).join('')+'</tr></thead><tbody>'
+   +(part.length?part.map(function(o){return'<tr>'+COLS.map(function(c,i){var v=c[1](o);
+      if(c[0]==='Kết quả cam kết')return'<td><span class="pill '+RES[o.res][1]+'">'+esc(v)+'</span></td>';
+      if(c[0]==='Số ngày giao')return'<td class="num">'+esc(v)+'</td>';
+      return'<td'+(i<3?' style="white-space:nowrap;font-variant-numeric:tabular-nums"':'')+'>'+esc(v||'—')+'</td>'}).join('')+'</tr>'}).join('')
+    :'<tr><td colspan="'+COLS.length+'" style="text-align:center;color:var(--muted);padding:24px">Không có DO nào khớp điều kiện.</td></tr>')+'</tbody>';
+  $('pager').innerHTML=pages>1?'<button class="btn" data-pg="-1"'+(state.page===1?' disabled':'')+'>‹ Trước</button> Trang '+state.page+' / '+pages+' <button class="btn" data-pg="1"'+(state.page===pages?' disabled':'')+'>Sau ›</button>':'';
+}
+$('q')&&0;
+document.addEventListener('input',function(e){if(e.target.id==='q'){state.page=1;detail(ALL.filter(inPer))}});
+document.addEventListener('change',function(e){if(e.target.id==='fs'){state.page=1;detail(ALL.filter(inPer))}});
+document.addEventListener('click',function(e){var p=e.target.closest('[data-pg]');if(p){state.page+=+p.dataset.pg;detail(ALL.filter(inPer))}});
+var tip=$('tip');
+document.addEventListener('mousemove',function(e){var t=e.target.dataset&&e.target.dataset.tip;if(!t){tip.style.display='none';return}tip.textContent=t;tip.style.display='block';tip.style.left=Math.max(8,Math.min(e.clientX+12,innerWidth-tip.offsetWidth-8))+'px';tip.style.top=(e.clientY-32)+'px'});
+
+// ---- Xuất Excel (thư viện chỉ tải khi bấm)
+function toast(t){var x=$('toast');x.textContent=t;x.style.display='block';clearTimeout(x._t);x._t=setTimeout(function(){x.style.display='none'},3500)}
+function needXLSX(){return window.XLSX?Promise.resolve():new Promise(function(ok,no){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+function sheetOf(rows){var a=[COLS.map(function(c){return c[0]})].concat(rows.map(function(o){return COLS.map(function(c){return c[1](o)})}));var ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=COLS.map(function(c){return{wch:Math.max(12,c[0].length+2)}});ws['!autofilter']={ref:'A1:'+String.fromCharCode(64+COLS.length)+a.length};return ws}
+function save(name,build){toast('Đang chuẩn bị file Excel…');needXLSX().then(function(){var wb=XLSX.utils.book_new();build(wb);XLSX.writeFile(wb,name);toast('Đã tải '+name)}).catch(function(){toast('Không tải được thư viện Excel. Kiểm tra mạng rồi thử lại.')})}
+function stamp(){var d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)}
+$('xAll').addEventListener('click',function(){
+  save('KAROFI_doi_chieu_giao_hang_'+stamp()+'.xlsx',function(wb){
+    var R=ALL.filter(inPer),ok=R.filter(function(o){return o.res==='ok'}).length,bad=R.filter(function(o){return o.res==='bad'}).length,done=R.filter(function(o){return o.done}).length;
+    var sum=[['BÁO CÁO GIAO HÀNG KAROFI'],['Kỳ báo cáo',perText()],['Xuất lúc',new Date().toLocaleString('vi-VN')],[],
+      ['Chỉ tiêu','Số DO'],['Tổng DO',R.length],['Đã hoàn tất giao',done],['Chưa hoàn tất',R.length-done],['Đúng cam kết',ok],['Sai cam kết',bad],['Tỷ lệ đúng cam kết (%)',pct(ok,ok+bad)],[],
+      ['Tỉnh nhận','Thời gian dự kiến','Số DO','Hoàn tất','Đúng cam kết','Sai cam kết','% đúng']].concat((window._PV||[]).map(function(x){return[x.p,x.lt||'',x.n,x.d,x.ok,x.bad,(x.ok+x.bad)?pct(x.ok,x.ok+x.bad):'']}));
+    var ws=XLSX.utils.aoa_to_sheet(sum);ws['!cols']=[{wch:28},{wch:22},{wch:10},{wch:10},{wch:14},{wch:12},{wch:9}];
+    XLSX.utils.book_append_sheet(wb,ws,'Tổng quan');XLSX.utils.book_append_sheet(wb,sheetOf(R),'Chi tiết DO');
+  })});
+$('xView').addEventListener('click',function(){save('KAROFI_DO_dang_loc_'+stamp()+'.xlsx',function(wb){XLSX.utils.book_append_sheet(wb,sheetOf(VIEW),'Danh sách')})});
+})();
+</script>
+</body>
+</html>
