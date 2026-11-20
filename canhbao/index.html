@@ -169,7 +169,10 @@ fetch(API+'?api=1&k='+encodeURIComponent(A)).then(function(r){return r.json()}).
     if(o.krf){var key=nk(o.prov),lt=LT[key];if(o.prov)o.prov=pdisp(key)||o.prov;
       o.basis=lt?'Leadtime HĐ '+lt[0]:(o.prov?'Chưa có leadtime ('+o.prov+')':'Chưa xác định tỉnh');
       o.due=(lt&&lt[1]!=null&&o.p)?new Date(o.p.getTime()+lt[1]*DAY):null;if(lt&&!o.p)o.basis+=' · chưa có ngày lấy hàng'}
-    else{o.due=pd(o.hanTxt);o.basis=o.due?'Hạn PO':(o.hanTxt?'Hạn PO: '+o.hanTxt:'Không có hạn PO')}
+    else{o.due=pd(o.hanTxt);o.basis=o.due?'Hạn PO':(o.hanTxt?'Hạn PO: '+o.hanTxt:'Không có hạn PO');
+      // Hạn PO bị đảo ngày/tháng (vd booking 26/10/2026, hạn ghi 11/01/2026 = 01/11/2026): hạn trước ngày booking mà đảo lại hợp lý thì dùng ngày đảo
+      var m=/(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(o.hanTxt);
+      if(o.due&&o.b&&o.due<o.b&&m&&+m[1]<=12){var sw=new Date(+m[3],+m[1]-1,+m[2]);if(sw>=o.b&&(sw-o.b)/DAY<=60){o.due=sw;o.basis='Hạn PO (file ghi '+o.hanTxt+', đã đảo ngày/tháng)';o.swap=1}}}
     return o}).filter(function(o){return!o.cancel&&o.b});
   var ns=N.slice();$('fn').innerHTML='<option value="">Tất cả NCC</option>'+ns.map(function(n){return'<option>'+esc(n)+'</option>'}).join('');
   $('sub').textContent='Dữ liệu cập nhật lúc '+(D.SNAP||'')+' · Hôm nay '+fd(TODAY)+' · Chỉ dùng nội bộ, không gửi khách';
