@@ -106,7 +106,7 @@ var $=function(i){return document.getElementById(i)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var K=new URLSearchParams(location.search).get('k')||'';
 // Leadtime cam kết theo HỢP ĐỒNG KAROFI (gửi từ Long An), tính theo tỉnh CŨ (trước sáp nhập)
-var LTG=[['1-2 ngày',2,'Hồ Chí Minh,Tây Ninh,Tiền Giang,Cần Thơ,Đồng Tháp,Vĩnh Long,Bến Tre'],
+var LTG=[['1-2 ngày',2,'Hồ Chí Minh,Long An,Tây Ninh,Tiền Giang,Cần Thơ,Đồng Tháp,Vĩnh Long,Bến Tre'],  // Long An: Kho vận chốt 1-2 ngày (20/11/2026)
  ['1-3 ngày',3,'Bình Dương,Trà Vinh'],
  ['2-4 ngày',4,'Đồng Nai,Bà Rịa - Vũng Tàu,Bình Phước,Bình Thuận,Khánh Hòa,An Giang,Kiên Giang,Hậu Giang,Sóc Trăng,Bạc Liêu,Cà Mau'],
  ['3-5 ngày',5,'Lâm Đồng,Đắk Lắk,Đắk Nông,Ninh Thuận,Đà Nẵng'],
