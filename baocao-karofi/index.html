@@ -30,7 +30,7 @@ header .sub{font-size:.88rem}
 .card{background:var(--card);color:var(--card-ink);border:1px solid var(--line);border-radius:14px;padding:18px}
 .card h2{margin:0 0 2px;font-size:1.05rem}
 .card .sub{font-size:.82rem;color:var(--muted)}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .kpi .l{font-size:.82rem;color:var(--muted);font-weight:600}
 .kpi .n{font-size:1.9rem;font-weight:700;line-height:1.15;margin-top:4px}
 .kpi .n small{font-size:.95rem;color:var(--muted);font-weight:600}
@@ -97,9 +97,9 @@ footer{margin-top:22px;font-size:.78rem;text-align:center}
         <label>Nền thẻ<input type="color" data-t="card"></label>
         <label>Màu chủ đạo<input type="color" data-t="ac"></label>
         <label>Nền phụ (dải, thanh)<input type="color" data-t="tile"></label>
-        <label>Đúng cam kết<input type="color" data-t="ok"></label>
-        <label>Sai cam kết<input type="color" data-t="bad"></label>
-        <label>Chưa hoàn tất<input type="color" data-t="wait"></label>
+        <label>Đã giao<input type="color" data-t="ok"></label>
+        <label>Quá thời gian dự kiến<input type="color" data-t="bad"></label>
+        <label>Chưa giao<input type="color" data-t="wait"></label>
         <label>Cỡ chữ<select data-t="size"><option value="12">12 px</option><option value="13">13 px · nhỏ</option><option value="14">14 px</option><option value="15">15 px · vừa</option><option value="16">16 px</option><option value="17">17 px · lớn</option><option value="18">18 px</option><option value="19">19 px</option><option value="20">20 px</option></select></label>
         <label>Phông chữ<select data-t="font"><option value='"Be Vietnam Pro",system-ui,sans-serif'>Be Vietnam Pro</option><option value='Arial,Helvetica,sans-serif'>Arial</option><option value='"Segoe UI",Tahoma,sans-serif'>Segoe UI</option><option value='"Times New Roman",serif'>Times New Roman</option></select></label>
       </div>
@@ -107,9 +107,9 @@ footer{margin-top:22px;font-size:.78rem;text-align:center}
     </section>
     <section class="kpis" id="kpis" style="margin-top:12px"></section>
     <div class="grid2">
-      <section class="card"><h2>Kết quả giao hàng theo ngày lấy hàng</h2><div class="sub" id="cSub"></div><div class="sub">Bấm vào một ngày để xem danh sách DO lấy hàng ngày đó.</div><div id="chart"></div>
-        <div class="lg"><span><i style="background:var(--ok)"></i>Đúng cam kết</span><span><i style="background:var(--bad)"></i>Sai cam kết</span><span><i style="background:var(--wait)"></i>Chưa hoàn tất</span></div></section>
-      <section class="card"><h2>Theo tỉnh nhận hàng</h2><div class="sub">Thời gian dự kiến theo leadtime trong hợp đồng (gửi từ Long An, tính theo tỉnh trước sáp nhập). Sắp xếp theo thời gian dự kiến. Bấm vào tên tỉnh hoặc con số để xem danh sách DO tương ứng.</div>
+      <section class="card"><h2>Tổng DO và DO đã giao theo ngày nhận hàng</h2><div class="sub" id="cSub"></div><div class="sub">Bấm vào một ngày để xem danh sách DO nhận hàng ngày đó.</div><div id="chart"></div>
+        <div class="lg"><span><i style="background:var(--accent)"></i>Tổng DO</span><span><i style="background:var(--ok)"></i>DO đã giao</span></div></section>
+      <section class="card"><h2>DO chưa giao theo ngày nhận hàng</h2><div class="sub">Ngày nhận hàng = ngày Thợ Điện Máy Xanh nhận hàng từ KAROFI. Ngày cũ nhất xếp trên cùng. Bấm vào ngày hoặc con số để xem danh sách DO.</div>
         <div class="scroll" style="max-height:460px"><table id="prov"></table></div></section>
     </div>
     <section class="card" style="margin-top:12px">
@@ -242,45 +242,44 @@ function render(){
   document.querySelectorAll('#per .btn').forEach(function(b){b.classList.toggle('on',b.dataset.p===state.per)});
   var R=ALL.filter(inPer),done=R.filter(function(o){return o.done}),ok=R.filter(function(o){return o.res==='ok'}),bad=R.filter(function(o){return o.res==='bad'}),
       wait=R.filter(function(o){return!o.done&&o.res!=='ret'}),ret=R.filter(function(o){return o.res==='ret'}),over=R.filter(function(o){return o.res==='over'});
-  var judged=ok.length+bad.length,rate=pct(ok.length,judged),target=TODAY<TARGET_DATE?85:100;
   var F=$('fs').value;
   $('kpis').innerHTML=
    kpi('','Tổng DO',R.length.toLocaleString('vi'),perText(),F)+
    kpi('done','Đã hoàn tất giao',done.length.toLocaleString('vi')+' <small>/ '+R.length.toLocaleString('vi')+'</small>',pct(done.length,R.length)+'% số DO',F)+
-   kpi('wait','Chưa hoàn tất',wait.length.toLocaleString('vi'),over.length.toLocaleString('vi')+' DO đã quá thời gian dự kiến'+(ret.length?' · '+ret.length+' DO hoàn bill/huỷ không tính':''),F)+
-   kpi('bad','Sai cam kết',bad.length.toLocaleString('vi'),pct(bad.length,judged)+'% trên '+judged.toLocaleString('vi')+' DO hoàn tất có leadtime',F)+
-   '<div class="card kpi big'+(F==='ok'?' on':'')+'" data-k="ok" title="Bấm để xem danh sách DO đúng cam kết"><div class="l">Tỷ lệ đúng cam kết</div><div class="n">'+rate.toLocaleString('vi')+'%</div><div class="meter"><i style="width:'+Math.min(100,rate)+'%;background:'+(rate>=target?'var(--ok)':'var(--bad)')+'"></i><b style="left:'+target+'%"></b></div><div class="s">Mục tiêu '+target+'%'+(target===85?' (đến 01/12/2026)':'')+'</div><div class="go">Xem '+ok.length.toLocaleString('vi')+' DO đúng cam kết →</div></div>';
+   kpi('wait','Chưa hoàn tất',wait.length.toLocaleString('vi'),over.length.toLocaleString('vi')+' DO đã quá thời gian dự kiến'+(ret.length?' · '+ret.length+' DO hoàn bill/huỷ không tính':''),F);
   chart(R);prov(R);detail(R);
 }
 function kpi(k,l,n,s,F){return'<div class="card kpi'+(F===k&&(k||!state.prov&&!state.day)?' on':'')+'" data-k="'+k+'" title="Bấm để xem danh sách DO"><div class="l">'+l+'</div><div class="n">'+n+'</div><div class="s">'+esc(s)+'</div><div class="go">Xem danh sách →</div></div>'}
 function chart(R){
-  var by={};R.forEach(function(o){if(!o.p)return;var k=+o.p;var c=by[k]||(by[k]=[0,0,0]);c[o.res==='ok'?0:o.res==='bad'?1:(o.done?0:2)]+=(o.res==='done'||o.res==='ret'?0:1)});
+  var by={};R.forEach(function(o){if(!o.p)return;var k=+o.p;var c=by[k]||(by[k]=[0,0]);c[0]++;if(o.done)c[1]++});
   var days=Object.keys(by).map(Number).sort(function(a,b){return a-b}).slice(-12);
-  $('cSub').textContent=days.length?'12 ngày lấy hàng gần nhất trong kỳ · số DO':'Chưa có ngày lấy hàng trong kỳ';
+  $('cSub').textContent=days.length?'12 ngày nhận hàng gần nhất trong kỳ · số DO':'Chưa có ngày nhận hàng trong kỳ';
   var W=1100,H=250,L=30,T=18,Bm=24,ph=H-T-Bm,pw=W-L-6,bw=pw/Math.max(1,days.length),max=1;
   days.forEach(function(d){by[d].forEach(function(v){if(v>max)max=v})});var top=max<=5?5:Math.ceil(max/10)*10;
-  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Kết quả giao hàng theo ngày">';
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Tổng DO và DO đã giao theo ngày nhận hàng">';
   [0,.5,1].forEach(function(f){var y=T+ph-ph*f;s+='<line x1="'+L+'" x2="'+(W-6)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/><text x="'+(L-5)+'" y="'+(y+4)+'" text-anchor="end">'+Math.round(top*f)+'</text>'});
-  var col=['var(--ok)','var(--bad)','var(--wait)'];
-  days.forEach(function(d,i){var c=by[d],x=L+i*bw,w=Math.min(Math.max(4,(bw-16)/3),22),gx=x+(bw-(w*3+4))/2,dt=new Date(d);
+  var col=['var(--accent)','var(--ok)'];
+  days.forEach(function(d,i){var c=by[d],x=L+i*bw,w=Math.min(Math.max(6,(bw-18)/2),30),gx=x+(bw-(w*2+3))/2,dt=new Date(d);
     if(state.day==d)s+='<rect x="'+x+'" y="'+T+'" width="'+bw+'" height="'+ph+'" fill="var(--accent)" opacity=".12"/>';else if(i%2===0)s+='<rect x="'+x+'" y="'+T+'" width="'+bw+'" height="'+ph+'" fill="var(--soft)" opacity=".55"/>';
-    c.forEach(function(v,j){var hh=v/top*ph,bx=gx+j*(w+2);if(v){s+='<rect x="'+bx+'" y="'+(T+ph-hh)+'" width="'+w+'" height="'+hh+'" rx="'+Math.min(3,hh/2)+'" fill="'+col[j]+'"/><text x="'+(bx+w/2)+'" y="'+(T+ph-hh-4)+'" text-anchor="middle" style="font-weight:600">'+v+'</text>'}});
-    s+='<rect x="'+x+'" y="'+T+'" width="'+bw+'" height="'+ph+'" fill="transparent" style="cursor:pointer" data-day="'+d+'" data-tip="'+fd(dt)+': Đúng '+c[0]+' · Sai '+c[1]+' · Chưa hoàn tất '+c[2]+'"/>';
+    c.forEach(function(v,j){var hh=v/top*ph,bx=gx+j*(w+3);if(v){s+='<rect x="'+bx+'" y="'+(T+ph-hh)+'" width="'+w+'" height="'+hh+'" rx="'+Math.min(4,hh/2)+'" fill="'+col[j]+'"/><text x="'+(bx+w/2)+'" y="'+(T+ph-hh-4)+'" text-anchor="middle" style="font-weight:600">'+v+'</text>'}});
+    s+='<rect x="'+x+'" y="'+T+'" width="'+bw+'" height="'+ph+'" fill="transparent" style="cursor:pointer" data-day="'+d+'" data-tip="'+fd(dt)+': Tổng '+c[0]+' DO · Đã giao '+c[1]+' · Chưa giao '+(c[0]-c[1])+'"/>';
     s+='<text x="'+(x+bw/2)+'" y="'+(H-7)+'" text-anchor="middle"'+(state.day==d?' style="fill:var(--accent);font-weight:700"':'')+'>'+dt.getDate()+'/'+(dt.getMonth()+1)+'</text>'});
   $('chart').innerHTML=s+'</svg>';
 }
 function prov(R){
-  var g={};R.forEach(function(o){var k=o.prov||'Chưa xác định';var x=g[k]||(g[k]={p:k,lt:o.lt,n:0,d:0,ok:0,bad:0,w:0,ov:0,sd:0,nd:0});
-    x.n++;if(o.done)x.d++;else x.w++;if(o.res==='ok')x.ok++;if(o.res==='bad')x.bad++;if(o.res==='over')x.ov++;if(o.days!=null){x.sd+=o.days;x.nd++}if(!x.lt&&o.lt)x.lt=o.lt});
-  var LX=function(x){var v=(LT[nk(x.p)]||[])[1];return x.p==='Chưa xác định'?1e4:v==null?(x.lt==='Thỏa thuận'?100:1e3):v};
-  var L2=Object.values(g).sort(function(a,b){return LX(a)-LX(b)||b.n-a.n||a.p.localeCompare(b.p,'vi')});window._PV=L2;
-  var tg=TODAY<TARGET_DATE?85:100;
-  var rc=function(x){var j=x.ok+x.bad;if(!j)return'<span class="pill p-na">—</span>';var r=pct(x.ok,j);return'<span class="pill '+(r>=tg?'p-ok':'p-bad')+'">'+r+'%</span>'};
-  var rs=function(x){var j=x.ok+x.bad;if(!j)return'<span class="pill p-na">—</span>';var r=pct(x.bad,j);return'<span class="pill '+(r<=100-tg?'p-na':'p-bad')+'">'+r+'%</span>'};
-  var on=function(x,f){return state.prov===x.p&&$('fs').value===f?';background:color-mix(in srgb,var(--accent) 14%,transparent)':''};
-  var cell=function(x,f,v){return v?'<td class="num lk" data-pf="'+f+'" style="'+on(x,f).slice(1)+'">'+v+'</td>':'<td class="num"></td>'};
-  $('prov').innerHTML='<thead><tr><th>Tỉnh nhận</th><th>Dự kiến</th><th class="num">DO</th><th class="num">Hoàn tất</th><th class="num">Sai</th><th class="num">% Sai</th><th class="num">TB ngày giao</th><th class="num">% đúng</th></tr></thead><tbody>'
-   +L2.map(function(x){return'<tr data-prov="'+esc(x.p)+'" style="cursor:pointer'+(state.prov===x.p?';outline:2px solid var(--accent);outline-offset:-2px':'')+'"><td class="lk" data-pf="">'+esc(x.p)+'</td><td style="white-space:nowrap">'+esc(x.lt||'—')+'</td>'+cell(x,'',x.n)+cell(x,'done',x.d)+cell(x,'bad',x.bad)+'<td class="num">'+rs(x)+'</td><td class="num">'+(x.nd?(Math.round(x.sd/x.nd*10)/10).toLocaleString('vi'):'—')+'</td><td class="num lk" data-pf="ok">'+rc(x)+'</td></tr>'}).join('')+'</tbody>';
+  var g={};R.forEach(function(o){if(o.done||o.res==='ret')return;var k=o.p?String(+o.p):'none';
+    var x=g[k]||(g[k]={k:k,d:o.p,n:0,ov:0,pv:{}});x.n++;if(o.res==='over')x.ov++;var pn=o.prov||'Chưa xác định';x.pv[pn]=(x.pv[pn]||0)+1});
+  var L2=Object.values(g).sort(function(a,b){return(a.k==='none')-(b.k==='none')||(a.d||0)-(b.d||0)});window._PV=L2;
+  if(!L2.length){$('prov').innerHTML='<tbody><tr><td style="text-align:center;color:var(--muted);padding:24px">Không có DO nào chưa giao trong kỳ.</td></tr></tbody>';return}
+  var on=function(x,f){return String(state.day)===x.k&&$('fs').value===f?'background:color-mix(in srgb,var(--accent) 14%,transparent)':''};
+  var tot=0,tov=0;L2.forEach(function(x){tot+=x.n;tov+=x.ov});
+  $('prov').innerHTML='<thead><tr><th>Ngày nhận hàng</th><th class="num">Số ngày đã qua</th><th class="num">DO chưa giao</th><th class="num">Quá dự kiến</th><th>Tỉnh nhận</th></tr></thead><tbody>'
+   +L2.map(function(x){var age=x.d?Math.round((TODAY-x.d)/864e5):null,pv=Object.keys(x.pv).sort(function(a,b){return x.pv[b]-x.pv[a]});
+     return'<tr data-pday="'+x.k+'" style="cursor:pointer'+(String(state.day)===x.k?';outline:2px solid var(--accent);outline-offset:-2px':'')+'"><td class="lk" data-pf="wait" style="white-space:nowrap;font-weight:600">'+(x.d?fd(x.d):'Chưa có ngày nhận hàng')+'</td>'
+      +'<td class="num">'+(age==null?'—':age+' ngày')+'</td><td class="num lk" data-pf="wait" style="'+on(x,'wait')+'">'+x.n+'</td>'
+      +(x.ov?'<td class="num lk" data-pf="over" style="'+on(x,'over')+'"><span class="pill p-bad">'+x.ov+'</span></td>':'<td class="num"></td>')
+      +'<td style="font-size:.8rem;color:var(--muted)">'+pv.slice(0,3).map(function(p){return esc(p)+' ('+x.pv[p]+')'}).join(', ')+(pv.length>3?', +'+(pv.length-3)+' tỉnh':'')+'</td></tr>'}).join('')
+   +'</tbody><tfoot><tr><td style="font-weight:700">Tổng</td><td></td><td class="num" style="font-weight:700">'+tot+'</td><td class="num" style="font-weight:700">'+(tov||'')+'</td><td></td></tr></tfoot>';
 }
 var COLS=[['DO',function(o){return o.do}],['Mã bill',function(o){return o.bill}],['Mã PO',function(o){return o.po}],['Ngày booking',function(o){return fd(o.b)}],['Ngày lấy hàng',function(o){return fd(o.p)}],
   ['Tên khách hàng',function(o){return o.kho}],['Tỉnh nhận',function(o){return o.prov}],['Thời gian dự kiến',function(o){return o.lt}],['Thời gian hoàn tất',function(o){return fd(o.done)}],
@@ -288,12 +287,12 @@ var COLS=[['DO',function(o){return o.do}],['Mã bill',function(o){return o.bill}
 function detail(R){
   var q=$('q').value.trim().toLowerCase(),f=$('fs').value;
   VIEW=R.filter(function(o){
-    if(state.prov&&(o.prov||'Chưa xác định')!==state.prov)return false;if(state.day&&(!o.p||+o.p!==+state.day))return false;
+    if(state.prov&&(o.prov||'Chưa xác định')!==state.prov)return false;if(state.day==='none'){if(o.p)return false}else if(state.day&&(!o.p||+o.p!==+state.day))return false;
     if(f==='ok'&&o.res!=='ok'||f==='bad'&&o.res!=='bad'||f==='done'&&!o.done||f==='wait'&&(o.done||o.res==='ret')||f==='ret'&&o.res!=='ret'||f==='over'&&o.res!=='over')return false;
     return!q||[o.do,o.bill,o.po,o.kho,o.prov,o.st].some(function(x){return x&&String(x).toLowerCase().indexOf(q)>=0})});
   var per=50,pages=Math.max(1,Math.ceil(VIEW.length/per));if(state.page>pages)state.page=pages;
   var part=VIEW.slice((state.page-1)*per,state.page*per);
-  $('cnt').innerHTML=(state.prov?'<button class="btn" data-unprov>Tỉnh: '+esc(state.prov)+' ✕</button> ':'')+(state.day?'<button class="btn" data-unday>Ngày lấy hàng: '+fd(new Date(+state.day))+' ✕</button> ':'')+VIEW.length.toLocaleString('vi')+' DO';
+  $('cnt').innerHTML=(state.prov?'<button class="btn" data-unprov>Tỉnh: '+esc(state.prov)+' ✕</button> ':'')+(state.day?'<button class="btn" data-unday>Ngày nhận hàng: '+(state.day==='none'?'chưa có':fd(new Date(+state.day)))+' ✕</button> ':'')+VIEW.length.toLocaleString('vi')+' DO';
   $('det').innerHTML='<thead><tr>'+COLS.map(function(c){return'<th'+(c[0]==='Số ngày giao'?' class="num"':'')+'>'+c[0]+'</th>'}).join('')+'</tr></thead><tbody>'
    +(part.length?part.map(function(o){return'<tr>'+COLS.map(function(c,i){var v=c[1](o);
       if(c[0]==='Kết quả cam kết')return'<td><span class="pill '+RES[o.res][1]+'">'+esc(v)+'</span></td>';
@@ -311,6 +310,9 @@ document.addEventListener('click',function(e){
   var pv=e.target.closest('[data-prov]');if(pv){var c=e.target.closest('[data-pf]'),f=c?c.dataset.pf:'';
     if(state.prov===pv.dataset.prov&&$('fs').value===f){state.prov='';$('fs').value=''}else{state.prov=pv.dataset.prov;$('fs').value=f}
     state.day='';state.page=1;render();goDet();return}
+  var pd2=e.target.closest('[data-pday]');if(pd2){var c2=e.target.closest('[data-pf]'),f2=c2?c2.dataset.pf:'wait';
+    if(String(state.day)===pd2.dataset.pday&&$('fs').value===f2){state.day='';$('fs').value=''}else{state.day=pd2.dataset.pday;$('fs').value=f2}
+    state.prov='';state.page=1;render();goDet();return}
   var dy=e.target.closest('[data-day]');if(dy){state.day=state.day==dy.dataset.day?'':dy.dataset.day;state.prov='';$('fs').value='';state.page=1;render();if(state.day)goDet();return}
   if(e.target.closest('[data-unprov]')){state.prov='';state.page=1;render();return}
   if(e.target.closest('[data-unday]')){state.day='';state.page=1;render();return}
@@ -353,10 +355,10 @@ function save(name,build){toast('Đang chuẩn bị file Excel…');needXLSX().t
 function stamp(){var d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)}
 $('xAll').addEventListener('click',function(){
   save('KAROFI_doi_chieu_giao_hang_'+stamp()+'.xlsx',function(wb){
-    var R=ALL.filter(inPer),ok=R.filter(function(o){return o.res==='ok'}).length,bad=R.filter(function(o){return o.res==='bad'}).length,done=R.filter(function(o){return o.done}).length;
+    var R=ALL.filter(inPer),done=R.filter(function(o){return o.done}).length,ret=R.filter(function(o){return o.res==='ret'}).length,over=R.filter(function(o){return o.res==='over'}).length;
     var sum=[['BÁO CÁO GIAO HÀNG KAROFI'],['Kỳ báo cáo',perText()],['Xuất lúc',new Date().toLocaleString('vi-VN')],[],
-      ['Chỉ tiêu','Số DO'],['Tổng DO',R.length],['Đã hoàn tất giao',done],['Chưa hoàn tất',R.length-done],['Đúng cam kết',ok],['Sai cam kết',bad],['Tỷ lệ sai cam kết (%)',pct(bad,ok+bad)],['Tỷ lệ đúng cam kết (%)',pct(ok,ok+bad)],[],
-      ['Tỉnh nhận','Thời gian dự kiến','Số DO','Hoàn tất','Đúng cam kết','Sai cam kết','% Sai','TB ngày giao','% đúng']].concat((window._PV||[]).map(function(x){var j=x.ok+x.bad;return[x.p,x.lt||'',x.n,x.d,x.ok,x.bad,j?pct(x.bad,j):'',x.nd?Math.round(x.sd/x.nd*10)/10:'',j?pct(x.ok,j):'']}));
+      ['Chỉ tiêu','Số DO'],['Tổng DO',R.length],['Đã hoàn tất giao',done],['Chưa hoàn tất',R.length-done-ret],['Trong đó quá thời gian dự kiến',over],['Hoàn bill / huỷ (không tính)',ret],[],
+      ['DO chưa giao theo ngày nhận hàng'],['Ngày nhận hàng','Số ngày đã qua','DO chưa giao','Quá dự kiến','Tỉnh nhận']].concat((window._PV||[]).map(function(x){var pv=Object.keys(x.pv).sort(function(a,b){return x.pv[b]-x.pv[a]});return[x.d?fd(x.d):'Chưa có ngày nhận hàng',x.d?Math.round((TODAY-x.d)/864e5):'',x.n,x.ov,pv.map(function(p){return p+' ('+x.pv[p]+')'}).join(', ')]}));
     var ws=XLSX.utils.aoa_to_sheet(sum);ws['!cols']=[{wch:28},{wch:22},{wch:10},{wch:10},{wch:14},{wch:20},{wch:13},{wch:12},{wch:12},{wch:9}];
     XLSX.utils.book_append_sheet(wb,ws,'Tổng quan');XLSX.utils.book_append_sheet(wb,sheetOf(R),'Chi tiết DO');
   })});
