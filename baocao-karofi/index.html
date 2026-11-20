@@ -78,7 +78,7 @@ footer{margin-top:22px;font-size:.78rem;text-align:center}
     <div class="grid2">
       <section class="card"><h2>Kết quả giao hàng theo ngày lấy hàng</h2><div class="sub" id="cSub"></div><div id="chart"></div>
         <div class="lg"><span><i style="background:var(--ok)"></i>Đúng cam kết</span><span><i style="background:var(--bad)"></i>Sai cam kết</span><span><i style="background:var(--wait)"></i>Chưa hoàn tất</span></div></section>
-      <section class="card"><h2>Theo tỉnh nhận hàng</h2><div class="sub">Thời gian dự kiến theo leadtime cam kết (gửi từ Long An). Bấm vào một tỉnh để lọc chi tiết bên dưới.</div>
+      <section class="card"><h2>Theo tỉnh nhận hàng</h2><div class="sub">Thời gian dự kiến theo leadtime trong hợp đồng (gửi từ Long An, tính theo tỉnh trước sáp nhập). Bấm vào một tỉnh để lọc chi tiết bên dưới.</div>
         <div class="scroll" style="max-height:460px"><table id="prov"></table></div></section>
     </div>
     <section class="card" style="margin-top:12px">
@@ -105,26 +105,19 @@ var API='https:\/\/script.google.com/macros/s/AKfycbzRAMaclrPMA6xTRAS0ber2mcQk9Y
 var $=function(i){return document.getElementById(i)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var K=new URLSearchParams(location.search).get('k')||'';
-// Leadtime cam kết KAROFI (gửi từ Long An) theo tỉnh nhận – [hiển thị, số ngày tối đa]
-var LT={'CAN THO':['1-2 ngày',2],'DA NANG':['3-5 ngày',5],'DAK LAK':['3-5 ngày',5],'DONG THAP':['1-2 ngày',2],'KHANH HOA':['2-4 ngày',4],
- 'HO CHI MINH':['1-2 ngày',2],'TP.HCM':['1-2 ngày',2],'LAM DONG':['3-5 ngày',5],'QUANG NGAI':['4-6 ngày',6],'DONG NAI':['2-4 ngày',4],'AN GIANG':['2-4 ngày',4],
- 'CA MAU':['2-4 ngày',4],'VINH LONG':['1-2 ngày',2],'TAY NINH':['1-2 ngày',2],'GIA LAI':['4-6 ngày',6],'HUE':['4-6 ngày',6],'THUA THIEN HUE':['4-6 ngày',6],
- 'QUANG TRI':['5-7 ngày',7],'BINH DINH':['4-6 ngày',6],'PHU YEN':['4-6 ngày',6],'BINH DUONG':['1-3 ngày',3],'PHU QUOC':['2-4 ngày',4]};
-var DISP={'CAN THO':'Thành phố Cần Thơ','DA NANG':'Thành phố Đà Nẵng','DAK LAK':'Tỉnh Đắk Lắk','DONG THAP':'Tỉnh Đồng Tháp','KHANH HOA':'Tỉnh Khánh Hòa','HO CHI MINH':'Thành phố Hồ Chí Minh','LAM DONG':'Tỉnh Lâm Đồng','QUANG NGAI':'Tỉnh Quảng Ngãi','DONG NAI':'Tỉnh Đồng Nai','AN GIANG':'Tỉnh An Giang','CA MAU':'Tỉnh Cà Mau','VINH LONG':'Tỉnh Vĩnh Long','TAY NINH':'Tỉnh Tây Ninh','GIA LAI':'Tỉnh Gia Lai','HUE':'Thành phố Huế','QUANG TRI':'Tỉnh Quảng Trị','BINH DINH':'Bình Định','PHU YEN':'Phú Yên','BINH DUONG':'Tỉnh Bình Dương','PHU QUOC':'Phú Quốc (An Giang)'};
-var HCM='Thành phố Hồ Chí Minh',BDG='Tỉnh Bình Dương',BRVT='Tỉnh Bà Rịa - Vũng Tàu',DN='Thành phố Đà Nẵng',CT='Thành phố Cần Thơ',KH='Tỉnh Khánh Hòa',LD='Tỉnh Lâm Đồng',GL='Tỉnh Gia Lai',QNG='Tỉnh Quảng Ngãi',DL='Tỉnh Đắk Lắk',DT='Tỉnh Đồng Tháp',AG='Tỉnh An Giang',TN='Tỉnh Tây Ninh',CM='Tỉnh Cà Mau',VL='Tỉnh Vĩnh Long',DNA='Tỉnh Đồng Nai',HUE='Thành phố Huế',QT='Tỉnh Quảng Trị';
-var REG={HCM:HCM,BDU:BDG,BRV:BRVT,VTA:BRVT,DNA:DN,QNA:DN,KHH:KH,NTH:KH,LDO:LD,DNO:LD,BTH:LD,GLA:GL,BDI:GL,QNG:QNG,KTU:QNG,DLA:DL,PYE:DL,CTH:CT,STR:CT,HGI:CT,TGI:DT,DTH:DT,KGI:AG,AGI:AG,LAN:TN,TNI:TN,CMA:CM,BLI:CM,VLO:VL,TVI:VL,BTR:VL,DON:DNA,DNI:DNA,BPH:DNA,DNG:LD,TTH:HUE,HUE:HUE,QTR:QT,QBI:QT};
-var KW=[['BUON MA THUO',DL],['KRONG',DL],['TUY HOA',DL],['PHU YEN',DL],['DAK LAK',DL],['PLEIKU',GL],['QUY NHON',GL],['BINH DINH',GL],['KBANG',GL],['NHA TRANG',KH],['CAM RANH',KH],['NINH HOA',KH],['PHAN RANG',KH],
- ['KON TUM',QNG],['DAK TO',QNG],['QUANG NGAI',QNG],['PHAN THIET',LD],['DUC TRONG',LD],['DAK NONG',LD],['BAO LOC',LD],['DA LAT',LD],['NHAN CO',LD],['BIEN HOA',DNA],['TRANG BOM',DNA],['THONG NHAT',DNA],['LONG THANH',DNA],['BINH PHUOC',DNA],['DONG NAI',DNA],
- ['BA RIA',BRVT],['VUNG TAU',BRVT],['BEN CAT',BDG],['BINH DUONG',BDG],['THU DAU MOT',BDG],['TAN UYEN',BDG],['THU DUC',HCM],['TAN BINH',HCM],['HO CHI MINH',HCM],['CMT8',HCM],['PHU QUOC',AG],['CHAU DOC',AG],['LONG XUYEN',AG],['RACH GIA',AG],['AN GIANG',AG],
- ['BEN LUC',TN],['TAN AN',TN],['DUC HOA',TN],['TRANG BANG',TN],['TAY NINH',TN],['CAN THO',CT],['CAI RANG',CT],['SOC TRANG',CT],['VI THANH',CT],['MY THO',DT],['TIEN GIANG',DT],['CAO LANH',DT],['DONG THAP',DT],
- ['KIEN DUC',LD],['CU JUT',LD],['DAK MIL',LD],['DA TEH',LD],['CU CHI',HCM],['BINH CHANH',HCM],['GO VAP',HCM],['TAN PHU',HCM],['QUAN ',HCM],['DI AN',BDG],['THUAN AN',BDG],['LINH DONG',HCM],['TAN THUAN',HCM],['TAN CANG',HCM],['BINH THANH',HCM],['TAN TAO',HCM],
- ['LONG HO',VL],['CAI LAY',DT],['GO CONG',DT],['HONG NGU',DT],['SA DEC',DT],['THAP MUOI',DT],['KIEN GIANG',AG],['QUANG NAM',DN],['HOI A',DN],['QUANG BINH',QT],['BMT',DL],['CA MAU',CM],['BAC LIEU',CM],['VINH LONG',VL],['BEN TRE',VL],['TRA VINH',VL],['DA NANG',DN],['CAM LE',DN],['LIEN CHIEU',DN],['DIEN BAN',DN],['TAM KY',DN],['THANG BINH',DN],['HOI AN',DN],['HUE',HUE],['QUANG TRI',QT],['DONG HA',QT],['DONG HOI',QT]];
-var SHOP={BDG:BDG,BAR:BRVT,HCM:HCM,BPC:DNA,DNI:DNA,TNH:TN,LAN:TN,CMU:CM,VLG:VL,AGG:AG,CTO:CT,DTP:DT,KHA:KH,LDG:LD,DLK:DL,GLI:GL,DNG:DN};
-function provFromKho(name){var s=nk(name),m=/(?:^|[^A-Z])[A-Z]{2,3}_\s?([A-Z]{3})(?![A-Z])/.exec(s);if(m&&REG[m[1]])return REG[m[1]];
-  var m2=/^\d+\s+([A-Z]{3})\s/.exec(s);if(m2&&SHOP[m2[1]])return SHOP[m2[1]];
-  for(var i=0;i<KW.length;i++)if(s.indexOf(KW[i][0])>=0)return KW[i][1];return''}
-var TARGET_DATE=new Date(2026,11,1); // từ 01/12/2026 cam kết 100%
-function nk(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toUpperCase().replace(/^(TINH|THANH PHO|TP\.?)\s+/,'').trim()}
+// Leadtime cam kết theo HỢP ĐỒNG KAROFI (gửi từ Long An), tính theo tỉnh CŨ (trước sáp nhập)
+var LTG=[['1-2 ngày',2,'Hồ Chí Minh,Tây Ninh,Tiền Giang,Cần Thơ,Đồng Tháp,Vĩnh Long,Bến Tre'],
+ ['1-3 ngày',3,'Bình Dương,Trà Vinh'],
+ ['2-4 ngày',4,'Đồng Nai,Bà Rịa - Vũng Tàu,Bình Phước,Bình Thuận,Khánh Hòa,An Giang,Kiên Giang,Hậu Giang,Sóc Trăng,Bạc Liêu,Cà Mau'],
+ ['3-5 ngày',5,'Lâm Đồng,Đắk Lắk,Đắk Nông,Ninh Thuận,Đà Nẵng'],
+ ['4-6 ngày',6,'Hà Nội,Huế,Quảng Nam,Quảng Ngãi,Bình Định,Phú Yên,Gia Lai,Kon Tum,Thanh Hóa,Hà Nam,Ninh Bình,Bắc Ninh,Vĩnh Phúc,Hưng Yên'],
+ ['5-7 ngày',7,'Hải Phòng,Hải Dương,Quảng Ninh,Thái Nguyên,Nam Định,Thái Bình,Nghệ An,Hà Tĩnh,Quảng Bình,Quảng Trị,Bắc Giang,Phú Thọ,Hòa Bình'],
+ ['Thỏa thuận',null,'Lào Cai,Yên Bái,Lạng Sơn,Cao Bằng,Bắc Kạn,Hà Giang,Tuyên Quang,Sơn La,Điện Biên,Lai Châu']];
+var LT={},PNAME={};
+function nk(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toUpperCase().replace(/^(TINH|THANH PHO|TP\.?)\s+/,'').replace(/\s*-\s*/g,' - ').trim()}
+LTG.forEach(function(g){g[2].split(',').forEach(function(p){LT[nk(p)]=[g[0],g[1]];PNAME[nk(p)]=p})});
+LT['THUA THIEN HUE']=LT['HUE'];PNAME['THUA THIEN HUE']='Huế';LT['BA RIA VUNG TAU']=LT['BA RIA - VUNG TAU'];
+function pdisp(k){return PNAME[k]||''}
 function pd(s){var m=/(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s||'');return m?new Date(+m[3],m[2]-1,+m[1]):null}
 function fd(d){return d?('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear():''}
 var now=new Date(),TODAY=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -132,6 +125,29 @@ var ALL=[],state={per:'30',page:1,prov:''},VIEW=[];
 
 if(!K){$('load').textContent='Link thiếu mã báo cáo. Vui lòng liên hệ Kho vận HCM.';return}
 
+// Mã vùng trong tên kho -> tỉnh cũ
+var REG={HCM:'Hồ Chí Minh',BDU:'Bình Dương',BRV:'Bà Rịa - Vũng Tàu',VTA:'Bà Rịa - Vũng Tàu',DNA:'Đà Nẵng',QNA:'Quảng Nam',KHH:'Khánh Hòa',NTH:'Ninh Thuận',
+ LDO:'Lâm Đồng',DNO:'Đắk Nông',DNG:'Đắk Nông',BTH:'Bình Thuận',GLA:'Gia Lai',BDI:'Bình Định',QNG:'Quảng Ngãi',KTU:'Kon Tum',DLA:'Đắk Lắk',PYE:'Phú Yên',
+ CTH:'Cần Thơ',STR:'Sóc Trăng',HGI:'Hậu Giang',TGI:'Tiền Giang',DTH:'Đồng Tháp',KGI:'Kiên Giang',AGI:'An Giang',LAN:'Long An',TNI:'Tây Ninh',CMA:'Cà Mau',BLI:'Bạc Liêu',
+ VLO:'Vĩnh Long',TVI:'Trà Vinh',BTR:'Bến Tre',DON:'Đồng Nai',DNI:'Đồng Nai',BPH:'Bình Phước',TTH:'Huế',HUE:'Huế',QTR:'Quảng Trị',QBI:'Quảng Bình',HNO:'Hà Nội',HPH:'Hải Phòng',THO:'Thanh Hóa',NAN:'Nghệ An',HTI:'Hà Tĩnh'};
+var SHOP={BDG:'Bình Dương',BAR:'Bà Rịa - Vũng Tàu',HCM:'Hồ Chí Minh',BPC:'Bình Phước',DNI:'Đồng Nai',TNH:'Tây Ninh',LAN:'Long An',CMU:'Cà Mau',VLG:'Vĩnh Long',AGG:'An Giang'};
+var KW=[['BUON MA THUO','Đắk Lắk'],['KRONG','Đắk Lắk'],['TUY HOA','Phú Yên'],['PHU YEN','Phú Yên'],['DAK LAK','Đắk Lắk'],['PLEIKU','Gia Lai'],['KBANG','Gia Lai'],['QUY NHON','Bình Định'],['PHU CAT','Bình Định'],['BINH DINH','Bình Định'],
+ ['NHA TRANG','Khánh Hòa'],['CAM RANH','Khánh Hòa'],['NINH HOA','Khánh Hòa'],['PHAN RANG','Ninh Thuận'],['KON TUM','Kon Tum'],['DAK TO','Kon Tum'],['QUANG NGAI','Quảng Ngãi'],
+ ['PHAN THIET','Bình Thuận'],['HAM THUAN','Bình Thuận'],['DUC LINH','Bình Thuận'],['TUY PHONG','Bình Thuận'],['DUC TRONG','Lâm Đồng'],['BAO LOC','Lâm Đồng'],['DA LAT','Lâm Đồng'],['DA TEH','Lâm Đồng'],
+ ['KIEN DUC','Đắk Nông'],['CU JUT','Đắk Nông'],['DAK MIL','Đắk Nông'],['NHAN CO','Đắk Nông'],['DAK NONG','Đắk Nông'],['BIEN HOA','Đồng Nai'],['TRANG BOM','Đồng Nai'],['THONG NHAT','Đồng Nai'],['LONG THANH','Đồng Nai'],['DONG NAI','Đồng Nai'],
+ ['BINH PHUOC','Bình Phước'],['CHON THANH','Bình Phước'],['BA RIA','Bà Rịa - Vũng Tàu'],['VUNG TAU','Bà Rịa - Vũng Tàu'],['BEN CAT','Bình Dương'],['BINH DUONG','Bình Dương'],['THU DAU MOT','Bình Dương'],['TAN UYEN','Bình Dương'],['DI AN','Bình Dương'],['THUAN AN','Bình Dương'],
+ ['CU CHI','Hồ Chí Minh'],['BINH CHANH','Hồ Chí Minh'],['GO VAP','Hồ Chí Minh'],['TAN PHU','Hồ Chí Minh'],['THU DUC','Hồ Chí Minh'],['TAN BINH','Hồ Chí Minh'],['BINH THANH','Hồ Chí Minh'],['LINH DONG','Hồ Chí Minh'],['TAN THUAN','Hồ Chí Minh'],['TAN CANG','Hồ Chí Minh'],['TAN TAO','Hồ Chí Minh'],['QUAN ','Hồ Chí Minh'],['CMT8','Hồ Chí Minh'],['HO CHI MINH','Hồ Chí Minh'],
+ ['PHU QUOC','Kiên Giang'],['RACH GIA','Kiên Giang'],['KIEN GIANG','Kiên Giang'],['CHAU DOC','An Giang'],['LONG XUYEN','An Giang'],['AN GIANG','An Giang'],
+ ['BEN LUC','Long An'],['TAN AN','Long An'],['DUC HOA','Long An'],['CAN DUOC','Long An'],['TRANG BANG','Tây Ninh'],['TAY NINH','Tây Ninh'],
+ ['MY THO','Tiền Giang'],['CAI LAY','Tiền Giang'],['GO CONG','Tiền Giang'],['TIEN GIANG','Tiền Giang'],['CAO LANH','Đồng Tháp'],['SA DEC','Đồng Tháp'],['HONG NGU','Đồng Tháp'],['THAP MUOI','Đồng Tháp'],['DONG THAP','Đồng Tháp'],
+ ['CAN THO','Cần Thơ'],['CAI RANG','Cần Thơ'],['SOC TRANG','Sóc Trăng'],['VI THANH','Hậu Giang'],['HAU GIANG','Hậu Giang'],['BAC LIEU','Bạc Liêu'],['CA MAU','Cà Mau'],
+ ['LONG HO','Vĩnh Long'],['VINH LONG','Vĩnh Long'],['BEN TRE','Bến Tre'],['TRA VINH','Trà Vinh'],
+ ['DIEN BAN','Quảng Nam'],['TAM KY','Quảng Nam'],['THANG BINH','Quảng Nam'],['HOI A','Quảng Nam'],['QUANG NAM','Quảng Nam'],['CAM LE','Đà Nẵng'],['LIEN CHIEU','Đà Nẵng'],['DA NANG','Đà Nẵng'],
+ ['DONG HOI','Quảng Bình'],['QUANG BINH','Quảng Bình'],['DONG HA','Quảng Trị'],['QUANG TRI','Quảng Trị'],['HUE','Huế']];
+function provFromKho(name){var s=nk(name),m=/(?:^|[^A-Z])[A-Z]{2,3}_\s?([A-Z]{3})(?![A-Z])/.exec(s);if(m&&REG[m[1]])return REG[m[1]];
+  var m2=/^\d+\s+([A-Z]{3})\s/.exec(s);if(m2&&SHOP[m2[1]])return SHOP[m2[1]];
+  for(var i=0;i<KW.length;i++)if(s.indexOf(KW[i][0])>=0)return KW[i][1];return''}
+var TARGET_DATE=new Date(2026,11,1); // từ 01/12/2026 cam kết 100%
 function lum(h){var n=parseInt(h.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
 function ink(h){return lum(h)>.45?'#14201C':'#F4F6F5'}
 function theme(t){if(!t)return;var R=document.documentElement.style;
@@ -157,8 +173,8 @@ fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).
   ALL=Object.values(map).map(function(o){
     var s=B[o.bill]||[],st=s[0]||'',done=pd(s[1]||'');
     var key=nk(o.prov),lt=LT[key]||null;
-    if(!lt){var kk=nk(o.kho);Object.keys(LT).some(function(x){if(kk.indexOf(x)>=0){lt=LT[x];if(!o.prov)o.prov=DISP[x]||'';return true}})}
-    o.st=st||(o.bill?'Chưa có dữ liệu':'Chưa có mã bill');o.done=done;o.lt=lt?lt[0]:'';o.ltMax=lt?lt[1]:null;
+    if(o.prov)o.prov=pdisp(key)||o.prov;
+    o.st=st||(o.bill?'Chưa có dữ liệu':'Chưa có mã bill');o.done=done;o.lt=lt?lt[0]:(o.prov?'Chưa có trong hợp đồng':'');o.ltMax=lt?lt[1]:null;
     o.days=(done&&o.p)?Math.round((done-o.p)/864e5):null;
     if(done){o.res=(o.ltMax!=null&&o.days!=null)?(o.days<=o.ltMax?'ok':'bad'):'done'}
     else{o.res=(o.ltMax!=null&&o.p&&Math.round((TODAY-o.p)/864e5)>o.ltMax)?'over':'wait'}
@@ -184,7 +200,7 @@ function inPer(o){
   var p=state.per.slice(2).split('-');return o.b.getFullYear()==p[0]&&o.b.getMonth()+1==p[1];
 }
 function perText(){if(state.per==='all')return'toàn bộ dữ liệu';if(state.per==='30'){var a=new Date(TODAY);a.setDate(a.getDate()-29);return'30 ngày gần nhất ('+fd(a)+' – '+fd(TODAY)+')'}var p=state.per.slice(2).split('-');return'tháng '+p[1]+'/'+p[0]}
-var RES={ok:['Đúng cam kết','p-ok'],bad:['Sai cam kết','p-bad'],done:['Hoàn tất (chưa có leadtime)','p-na'],wait:['Chưa hoàn tất','p-wait'],over:['Chưa hoàn tất · quá dự kiến','p-bad']};
+var RES={ok:['Đúng cam kết','p-ok'],bad:['Sai cam kết','p-bad'],done:['Hoàn tất · không đánh giá','p-na'],wait:['Chưa hoàn tất','p-wait'],over:['Chưa hoàn tất · quá dự kiến','p-bad']};
 function pct(a,b){return b?Math.round(a/b*1000)/10:0}
 function render(){
   document.querySelectorAll('#per .btn').forEach(function(b){b.classList.toggle('on',b.dataset.p===state.per)});
