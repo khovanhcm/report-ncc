@@ -91,7 +91,9 @@ var KEY=['Mã chứng từ','Mã chứng từ đối tác','Thời gian tạo','
 var TPL=[],DATA=null;
 function msg(id,cls,html){$(id).innerHTML=html?'<div class="msg '+cls+'">'+html+'</div>':''}
 function stat(l,n){return'<div class="stat"><div class="l">'+l+'</div><div class="n">'+n+'</div></div>'}
-function post(o){o.k=A;return fetch(API,{method:'POST',body:JSON.stringify(o)}).then(function(r){return r.json()})}
+function post(o,tries){o.k=A;tries=tries==null?(o.op==='commit'?1:3):tries;
+  return fetch(API,{method:'POST',body:JSON.stringify(o)}).then(function(r){return r.json()})
+   .catch(function(e){if(tries>1)return new Promise(function(ok){setTimeout(ok,2500)}).then(function(){return post(o,tries-1)});throw new Error('Mất kết nối tới máy chủ')})}
 
 if(!A){$('curSub').textContent='Thiếu mã quản trị trong link (…/quantri/?a=<mã link Tất cả NCC>).';$('up').classList.add('hide')}
 else loadStatus();
