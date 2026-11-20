@@ -19,7 +19,7 @@ function onOpen() {
     .addItem('Tạo / cập nhật link NCC', 'setupLinks')
     .addItem('Nhập data từ file NCC + làm mới link', 'dailyJob')
     .addItem('Làm mới data ngay', 'refreshAll')
-    .addItem('Bật lịch tự động 2:00 hằng ngày', 'installDailyTrigger')
+    .addItem('Bật lịch tự động 2 tiếng/lần', 'installDailyTrigger')
     .addToUi();
 }
 
@@ -116,14 +116,14 @@ function refreshAll() {
   try { SpreadsheetApp.getActive().toast('Đã làm mới data cho ' + n + ' link lúc ' + src.snap, 'Report NCC', 8); } catch (err) {}
 }
 
-/** Tạo lịch tự chạy dailyJob lúc 2:00 mỗi ngày (giờ Việt Nam) + nạp bộ nhớ đệm 4 tiếng/lần. Chạy 1 lần là đủ. */
+/** Tạo lịch tự chạy dailyJob 2 tiếng/lần + nạp bộ nhớ đệm 4 tiếng/lần. Chạy 1 lần là đủ. */
 function installDailyTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     var f = t.getHandlerFunction();
     if (f === 'refreshAll' || f === 'dailyJob') ScriptApp.deleteTrigger(t);
   });
-  // 2:00 hằng ngày: nhập data từ file NCC rồi làm mới link (Google chạy trong khung 2:00-2:15)
-  ScriptApp.newTrigger('dailyJob').timeBased().atHour(2).nearMinute(0).everyDays(1).inTimezone('Asia/Ho_Chi_Minh').create();
+  // 2 tiếng/lần: nhập data từ file NCC rồi làm mới link
+  ScriptApp.newTrigger('dailyJob').timeBased().everyHours(2).create();
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'warmCache') ScriptApp.deleteTrigger(t);
   });
@@ -316,7 +316,7 @@ function buildData_(rows2, s3map, khoName, onlyNcc, snap, noRet, khoProv) {
 var SRC_SHEET = '6.';
 var FROM_DEFAULT = '01/10/2026';
 
-/** Chạy mỗi ngày lúc 2:00: nhập data từ file NCC rồi làm mới các link báo cáo. */
+/** Chạy 2 tiếng/lần: nhập data từ file NCC rồi làm mới các link báo cáo. */
 function dailyJob() {
   importAll();
   // Làm mới link ở một lượt chạy riêng sau 1 phút, tránh vượt giới hạn 6 phút/lượt của Google

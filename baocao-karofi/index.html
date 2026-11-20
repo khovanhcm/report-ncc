@@ -216,7 +216,7 @@ fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).
     return o;
   }).filter(function(o){return o.b}).sort(function(a,b){return b.b-a.b});
   $('sub').textContent='Dữ liệu cập nhật lúc '+(D.SNAP||'')+' · Thông tin dành riêng cho KAROFI';
-  $('foot').textContent='Thợ Điện Máy Xanh · Kho vận Hồ Chí Minh. Ngày hoàn tất lấy theo trạng thái "5 - Hoàn tất giao hàng" trên hệ thống vận chuyển. Dữ liệu cập nhật tự động lúc 2:00 hằng ngày.';
+  $('foot').textContent='Thợ Điện Máy Xanh · Kho vận Hồ Chí Minh. Ngày hoàn tất lấy theo trạng thái "5 - Hoàn tất giao hàng" trên hệ thống vận chuyển. Dữ liệu cập nhật tự động 2 tiếng/lần.';
   periods();$('load').remove();$('app').style.display='';render();
 }).catch(function(){$('load').textContent='Không tải được dữ liệu. Vui lòng tải lại trang.'});
 
