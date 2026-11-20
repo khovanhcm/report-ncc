@@ -33,11 +33,6 @@ header .eyebrow,footer{color:var(--hmuted)!important}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .chip{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--soft);color:var(--card-ink);border-radius:999px;padding:4px 11px;cursor:pointer}
 .chip b{font-weight:600}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
-.stat{background:var(--soft);border-radius:10px;padding:10px 12px;cursor:pointer;border:1px solid transparent}
-.stat:hover,.stat.on{border-color:var(--accent)}
-.stat .n{font-size:1.4rem;font-weight:700}
-.stat .l{font-size:.8rem;color:var(--muted)}
 #res{margin-top:18px;display:grid;gap:14px}
 .po h2{margin:0;font-size:1.15rem}
 .po .meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 16px;margin:12px 0 4px}
@@ -73,7 +68,7 @@ details{margin-top:8px}summary{cursor:pointer;font-weight:600;font-size:.86rem;c
 .lb img{max-width:100%;max-height:100%;border-radius:8px}
 .lb button{position:absolute;top:14px;right:16px;font-size:1.6rem;background:none;border:0;color:#fff;cursor:pointer}
 footer{margin-top:26px;font-size:.78rem;color:var(--muted);text-align:center}
-@media (max-width:640px){.po .meta{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(3,1fr)}.step{font-size:.7rem}header h1{font-size:1.35rem}}
+@media (max-width:640px){.po .meta{grid-template-columns:repeat(2,1fr)}.step{font-size:.7rem}header h1{font-size:1.35rem}}
 </style>
 </head>
 <body>
@@ -90,7 +85,6 @@ footer{margin-top:26px;font-size:.78rem;color:var(--muted);text-align:center}
       <button class="btn primary" id="go" disabled>Tra cứu</button>
     </form>
     <div class="hint">Có thể nhập nhiều mã, cách nhau bằng dấu phẩy hoặc khoảng trắng (tối đa 5 mã). Hành trình vận đơn lấy trực tiếp từ hệ thống vận chuyển.</div>
-    <div class="stats" id="stats"></div>
     <div class="chips" id="chips"></div>
   </section>
 
@@ -145,19 +139,7 @@ fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).
 
 function stat(b){return (BILLSTATE[b]||'')}
 var BILLSTATE={};
-function stats(D){
-  Object.keys(D.BILLS||{}).forEach(function(b){BILLSTATE[b]=D.BILLS[b]});
-  var list=Object.values(POS).filter(function(o){return o.po}),dl=[],nd=[],now=new Date();
-  list.forEach(function(o){var done=o.bills.length&&o.bills.some(function(b){var s=BILLSTATE[b];return s&&(s[1]||/^5|^FBC/i.test(s[0]||''))});(done?dl:nd).push(o)});
-  var t=function(o){var m=/(\d+)\/(\d+)\/(\d{4})/.exec(o.b||'');return m?+(m[3]+('0'+m[2]).slice(-2)+('0'+m[1]).slice(-2)):0};
-  nd.sort(function(a,b){return t(b)-t(a)});
-  window._ND=nd;
-  $('stats').innerHTML='<div class="stat" data-s="all"><div class="n">'+list.length.toLocaleString('vi')+'</div><div class="l">PO trong dữ liệu</div></div>'
-    +'<div class="stat" data-s="dl"><div class="n">'+dl.length.toLocaleString('vi')+'</div><div class="l">PO đã giao</div></div>'
-    +'<div class="stat" data-s="nd"><div class="n">'+nd.length.toLocaleString('vi')+'</div><div class="l">PO chưa giao · bấm để xem</div></div>';
-}
-$('stats').addEventListener('click',function(e){var s=e.target.closest('.stat');if(!s||s.dataset.s!=='nd')return;s.classList.toggle('on');
-  var on=s.classList.contains('on');$('chips').innerHTML=on?(window._ND.slice(0,40).map(function(o){return'<button class="chip" data-q="'+esc(o.po)+'"><b>'+esc(o.po)+'</b> · '+esc(o.b)+'</button>'}).join('')+(window._ND.length>40?'<span class="hint">… và '+(window._ND.length-40)+' PO khác</span>':'')):'';if(!on)recent()});
+function stats(D){Object.keys(D.BILLS||{}).forEach(function(b){BILLSTATE[b]=D.BILLS[b]})}
 $('chips').addEventListener('click',function(e){var c=e.target.closest('[data-q]');if(c){$('q').value=c.dataset.q;search(c.dataset.q);window.scrollTo({top:$('res').offsetTop-10,behavior:'smooth'})}});
 
 function recent(){var r=[];try{r=JSON.parse(localStorage.getItem(RECENT_KEY))||[]}catch(e){}
