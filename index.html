@@ -213,7 +213,7 @@ const DICT=window.DICT,BILLS=window.BILLS,NCCS=window.NCCS,MULTI=NCCS.length>1,N
 document.title=MULTI?'Report tất cả NCC':'Report NCC '+NCC;$('h1').textContent=MULTI?'Báo cáo đơn hàng tất cả NCC':'Báo cáo đơn hàng NCC '+NCC;$('snap').textContent='Dữ liệu cập nhật lúc '+window.SNAP+' · Data cập nhật tự động lúc 8:00 hằng ngày';
 
 // ---- đọc dữ liệu: [booking, lấy hàng, PO, hạn PO, bill, địa chỉ, cột I, KTT, tỉnh]
-const LINES=window.ROWS.map(r=>({b:mk(r[0]),p:mk(r[1]),po:r[2],han:r[3],bill:r[4],addr:DICT[r[5]],I:r[6],ktt:r[7]<0?'':DICT[r[7]],prov:r[8]<0?'':DICT[r[8]],ncc:NCCS[r[9]],kho:r[10]<0?'':DICT[r[10]]}));
+const LINES=window.ROWS.map(r=>({b:mk(r[0]),p:mk(r[1]),po:r[2],han:r[3],bill:r[4],addr:DICT[r[5]],I:r[6],ktt:r[7]<0?'':DICT[r[7]],prov:r[8]<0?'':DICT[r[8]],ncc:NCCS[r[9]],kho:r[10]<0?'':DICT[r[10]],do:r[11]||''}));
 const Y=LINES[0].b.getFullYear();
 const MONTHS=[...new Set(LINES.map(r=>r.b.getMonth()+1))].sort((a,b)=>a-b);
 
@@ -259,8 +259,8 @@ function build(ncc,all){
   L.forEach(r=>{
     const key=r.ncc+'|'+(r.po||(r.bill?'B:'+r.bill:'X:'+fd(r.b)+r.addr));
     let o=orders.get(key);
-    if(!o){o={ncc:r.ncc,po:r.po,b:r.b,p:r.p,han:r.han,bills:new Set(),addr:r.addr,ktt:r.ktt,prov:r.prov,kho:r.kho,n:0};orders.set(key,o)}
-    o.n++;if(r.bill)o.bills.add(r.bill);if(r.p&&(!o.p||r.p<o.p))o.p=r.p;if(r.b<o.b)o.b=r.b;if(!o.ktt)o.ktt=r.ktt;if(!o.prov)o.prov=r.prov;if(!o.kho)o.kho=r.kho;
+    if(!o){o={ncc:r.ncc,po:r.po,b:r.b,p:r.p,han:r.han,bills:new Set(),addr:r.addr,ktt:r.ktt,prov:r.prov,kho:r.kho,dos:new Set(),n:0};orders.set(key,o)}
+    o.n++;if(r.bill)o.bills.add(r.bill);if(r.do)o.dos.add(r.do);if(r.p&&(!o.p||r.p<o.p))o.p=r.p;if(r.b<o.b)o.b=r.b;if(!o.ktt)o.ktt=r.ktt;if(!o.prov)o.prov=r.prov;if(!o.kho)o.kho=r.kho;
     if(r.bill){let d=bills.get(r.bill);
       if(!d){d={ncc:r.ncc,bill:r.bill,pos:new Set(),b:r.b,p:r.p,addr:r.addr,ktt:r.ktt,prov:r.prov,n:0};bills.set(r.bill,d)}
       d.n++;if(r.po)d.pos.add(r.po);if(!d.ktt)d.ktt=r.ktt;if(!d.prov)d.prov=r.prov;}
@@ -310,12 +310,13 @@ const DSEC=[['done','Đơn hàng đã giao','Don_da_giao'],['und','Đơn hàng c
 function detRows(g){
   const qp=$('qpo').value.trim().toLowerCase(),q=$('q').value.trim().toLowerCase(),f=$('fRet').value;
   return D.L.filter(r=>{if(lgrp(r)!==g)return false;const v=!!(r.bill?ret(r.bill):r.I);if(f==='1'&&!v)return false;if(f==='0'&&v)return false;
-    if(qp&&!(r.po||'').toLowerCase().includes(qp)&&!(r.bill||'').toLowerCase().includes(qp))return false;
+    if(qp&&!(r.po||'').toLowerCase().includes(qp)&&!(r.bill||'').toLowerCase().includes(qp)&&!(r.do||'').toLowerCase().includes(qp))return false;
     return !q||[r.bill,r.kho,r.ncc,r.han,stat(r.bill)].some(x=>x&&x.toLowerCase().includes(q))}).map((r,i)=>Object.assign({stt:i+1},r));
 }
 const SPILL={done:'good',way:'warn',ret:'warn',cancel:'warn',na:'cnt'};
 // ---- Hành trình vận đơn lấy trực tiếp từ hệ thống vận chuyển (qua Apps Script) ----
 const LIVE=!!(window.TRACK_API&&window.TOKEN),LC={};
+if(LINES.some(r=>r.do))$('qpo').placeholder='Tìm mã PO, số DO hoặc mã bill…';
 function liveHTML(b){
   const r=LC[b];
   if(!r)return`<button class="btn" data-track="${esc(b)}">Xem hành trình vận đơn ▾</button>`;
@@ -341,14 +342,14 @@ function poCard(o){
     <div><span class="pill ${SPILL[g]}">${SG[g]}</span></div><div class="sub">Ngày hoàn tất giao: ${esc(deliv(b)||'chưa có')}${hasRet(o.ncc)?' · Trả chứng từ: '+retTxt(ret(b)):''}</div>${LIVE?`<div class="live" data-live="${esc(b)}">${liveHTML(b)}</div>`:''}</div>`}).join('')
     ||'<div class="doc"><div class="eyebrow">Chứng từ vận chuyển</div><div class="sub">PO này chưa có mã bill.</div></div>';
   return`<div class="pocard"><div><b>PO ${esc(o.po)}</b>${MULTI?' · '+esc(o.ncc):''} ${MULTI?`<span class="pill cnt">${esc(late)}</span>`:''}</div>
-    <div class="sub">Hạn PO: ${esc(o.han||'chưa có')} · Ngày booking: ${fd(o.b)} · Ngày lấy hàng: ${fd(o.p)||'chưa có'} · Kho nhận: ${esc(o.kho||'chưa có')}</div><div class="docs">${docs}</div></div>`;
+    <div class="sub">Hạn PO: ${esc(o.han||'chưa có')} · Ngày booking: ${fd(o.b)} · Ngày lấy hàng: ${fd(o.p)||'chưa có'} · Kho nhận: ${esc(o.kho||'chưa có')}${o.dos&&o.dos.size?' · Số DO: '+esc([...o.dos].join(', ')):''}</div><div class="docs">${docs}</div></div>`;
 }
 function renderDetail(){
   const qp=$('qpo').value.trim().toLowerCase(),qs=!!$('q').value.trim();let total=0,top='';
   const fix=s=>s.replace(/<td class="([^"]*)">Chưa có dữ liệu<\/td>/g,'<td class="$1 na">Không có dữ liệu</td>');
   if(qp){
-    const A=build(state.ncc,true),hit=o=>(o.po||'').toLowerCase().includes(qp)||[...o.bills].some(b=>b.toLowerCase().includes(qp)),os=A.O.filter(hit);
-    const ls=A.L.filter(r=>(r.po||'').toLowerCase().includes(qp)||(r.bill||'').toLowerCase().includes(qp)).map((r,i)=>Object.assign({stt:i+1},r));window._PL=ls;
+    const A=build(state.ncc,true),pd=new Set(A.L.filter(r=>r.do&&r.do.toLowerCase().includes(qp)).map(r=>r.po)),hit=o=>(o.po||'').toLowerCase().includes(qp)||[...o.bills].some(b=>b.toLowerCase().includes(qp))||pd.has(o.po),os=A.O.filter(hit);
+    const ls=A.L.filter(r=>(r.po||'').toLowerCase().includes(qp)||(r.bill||'').toLowerCase().includes(qp)||(r.do||'').toLowerCase().includes(qp)).map((r,i)=>Object.assign({stt:i+1},r));window._PL=ls;
     top=os.length?`<div class="sub">Kết quả tìm PO trong toàn bộ dữ liệu, không phụ thuộc kỳ báo cáo: ${os.length} PO, ${ls.length} dòng.${os.length>20?' Đang hiện 20 PO đầu; gõ thêm ký tự để thu hẹp.':''}</div>`
       +os.slice(0,20).map(poCard).join('')
       +`<div class="sec"><div class="sechead"><span class="sectog" style="cursor:default">Data của PO <span class="pill cnt">${ls.length.toLocaleString('vi')} dòng</span></span><button class="btn primary" data-x="po">Xuất Excel</button></div><div class="secbody">${fix(tableHTML(C.det,ls))}</div></div>`

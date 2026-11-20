@@ -100,7 +100,7 @@ var TRACK='https://tracuu-ncc.thanhquy11cdsh.workers.dev/';
 var $=function(i){return document.getElementById(i)};
 var P=new URLSearchParams(location.search),K=P.get('k')||'';
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
-var POS={},BILL2PO={},LC={},RECENT_KEY='tracuu-recent-'+K;
+var POS={},BILL2PO={},DO2PO={},HASDO=false,LC={},RECENT_KEY='tracuu-recent-'+K;
 
 if(!K){$('sub').textContent='Link thiếu mã tra cứu. Vui lòng liên hệ Kho vận HCM.';return}
 
@@ -124,6 +124,8 @@ fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).
     var po=r[2]||'',bill=r[4]||'';if(!po&&!bill)return;var key=po||bill;
     var o=POS[key]||(POS[key]={po:po,han:r[3],b:r[0],p:r[1],kho:r[10]<0?'':dict[r[10]],ncc:nccs[r[9]]||'',bills:[]});
     if(r[1]&&!o.p)o.p=r[1];
+    var dno=String(r[11]||'').trim();  // rule A.12: số DO (KAROFI)
+    if(dno){HASDO=true;o.dos=o.dos||[];if(o.dos.indexOf(dno)<0)o.dos.push(dno);(DO2PO[dno.toUpperCase()]=DO2PO[dno.toUpperCase()]||[]).indexOf(key)<0&&DO2PO[dno.toUpperCase()].push(key)}
     if(bill&&o.bills.indexOf(bill)<0)o.bills.push(bill);
     if(bill)(BILL2PO[bill.toUpperCase()]=BILL2PO[bill.toUpperCase()]||[]).indexOf(key)<0&&BILL2PO[bill.toUpperCase()].push(key);
   });
@@ -133,6 +135,7 @@ fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).
   $('sub').textContent='Dữ liệu đơn hàng cập nhật lúc '+(D.SNAP||'')+' · hành trình vận đơn tra trực tiếp khi bấm tìm';
   $('foot').textContent='Kho vận Hồ Chí Minh · Thông tin chỉ dành cho '+name+'. Mỗi vận đơn được làm mới sau tối đa 10 phút.';
   $('q').disabled=false;$('go').disabled=false;
+  if(HASDO){$('q').placeholder='Nhập mã PO, số DO hoặc mã vận đơn (bill)…';$('q').setAttribute('aria-label','Mã PO, số DO hoặc mã vận đơn')}
   stats(D);recent();
   var q0=P.get('q');if(q0){$('q').value=q0;search(q0)}else $('q').focus();
 }).catch(function(){$('sub').textContent='Không tải được dữ liệu. Vui lòng tải lại trang.'});
@@ -150,14 +153,16 @@ $('f').addEventListener('submit',function(e){e.preventDefault();search($('q').va
 
 function search(raw){
   var codes=String(raw||'').toUpperCase().split(/[\s,;]+/).filter(function(s){return s.length>=6}).slice(0,5);
-  if(!codes.length){$('res').innerHTML='<div class="card empty">Vui lòng nhập mã PO hoặc mã vận đơn (ít nhất 6 ký tự).</div>';return}
+  if(!codes.length){$('res').innerHTML='<div class="card empty">Vui lòng nhập mã PO'+(HASDO?', số DO':'')+' hoặc mã vận đơn (ít nhất 6 ký tự).</div>';return}
   var found=[],miss=[];
   codes.forEach(function(c){
     var keys=[];
     Object.keys(POS).forEach(function(k){if(k.toUpperCase()===c)keys.push(k)});
     if(!keys.length&&BILL2PO[c])keys=BILL2PO[c];
+    if(!keys.length&&DO2PO[c])keys=DO2PO[c];
     if(!keys.length)Object.keys(POS).forEach(function(k){if(keys.length<3&&k.toUpperCase().indexOf(c)>=0)keys.push(k)});
     if(!keys.length)Object.keys(BILL2PO).forEach(function(b){if(keys.length<3&&b.indexOf(c)>=0)BILL2PO[b].forEach(function(k){if(keys.indexOf(k)<0)keys.push(k)})});
+    if(!keys.length)Object.keys(DO2PO).forEach(function(d){if(keys.length<3&&d.indexOf(c)>=0)DO2PO[d].forEach(function(k){if(keys.indexOf(k)<0)keys.push(k)})});
     if(keys.length)keys.forEach(function(k){if(found.indexOf(k)<0)found.push(k)});else miss.push(c);
   });
   remember(codes.join(', '));
@@ -176,7 +181,7 @@ function lateBadge(o,lastDone){
 }
 function poCard(o){
   return'<article class="card po" data-po="'+esc(o.po||o.bills[0])+'"><div class="eyebrow">Đơn hàng</div><h2>'+(o.po?'PO '+esc(o.po):'Vận đơn '+esc(o.bills[0]))+(o.ncc&&!window._one?'':'')+' <span data-late></span></h2>'
-   +'<div class="meta"><div><span>Ngày booking</span>'+esc(o.b||'—')+'</div><div><span>Ngày lấy hàng</span>'+esc(o.p||'Chưa có')+'</div><div><span>Hạn PO</span>'+esc(o.han||'—')+'</div><div><span>Kho nhận</span>'+esc(o.kho||'—')+'</div></div>'
+   +'<div class="meta"><div><span>Ngày booking</span>'+esc(o.b||'—')+'</div><div><span>Ngày lấy hàng</span>'+esc(o.p||'Chưa có')+'</div><div><span>Hạn PO</span>'+esc(o.han||'—')+'</div><div><span>Kho nhận</span>'+esc(o.kho||'—')+'</div>'+(o.dos&&o.dos.length?'<div><span>Số DO</span>'+o.dos.map(esc).join(', ')+'</div>':'')+'</div>'
    +(o.bills.length?o.bills.map(function(b){return'<div class="bill" data-bill="'+esc(b)+'">'+billHTML(b)+'</div>'}).join(''):'<div class="bill note">Đơn hàng chưa có mã vận đơn.</div>')
    +'</article>';
 }
