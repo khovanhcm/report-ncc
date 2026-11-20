@@ -210,7 +210,7 @@ const fd=d=>d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).pad
 const TRACK='https:\/\/logisticpartner.thegioididong.com/TraCuu?Bill';
 if(window.NCCS.length>1){document.getElementById('kpis').classList.add('six');document.getElementById('trk').remove()}else{document.getElementById('lateNote').remove();if(window.TRACK_API)document.getElementById('trk').remove()}
 const DICT=window.DICT,BILLS=window.BILLS,NCCS=window.NCCS,MULTI=NCCS.length>1,NA='Chưa có dữ liệu';
-document.title=MULTI?'Report tất cả NCC':'Report NCC '+NCC;$('h1').textContent=MULTI?'Báo cáo đơn hàng tất cả NCC':'Báo cáo đơn hàng NCC '+NCC;$('snap').textContent='Dữ liệu cập nhật lúc '+window.SNAP+' · Data cập nhật tự động lúc 8:00 hằng ngày';
+document.title=MULTI?'Report tất cả NCC':'Report NCC '+NCC;$('h1').textContent=MULTI?'Báo cáo đơn hàng tất cả NCC':'Báo cáo đơn hàng NCC '+NCC;$('snap').textContent='Dữ liệu cập nhật lúc '+window.SNAP+' · Data cập nhật tự động lúc 2:00 hằng ngày';
 
 // ---- đọc dữ liệu: [booking, lấy hàng, PO, hạn PO, bill, địa chỉ, cột I, KTT, tỉnh]
 const LINES=window.ROWS.map(r=>({b:mk(r[0]),p:mk(r[1]),po:r[2],han:r[3],bill:r[4],addr:DICT[r[5]],I:r[6],ktt:r[7]<0?'':DICT[r[7]],prov:r[8]<0?'':DICT[r[8]],ncc:NCCS[r[9]],kho:r[10]<0?'':DICT[r[10]],do:r[11]||''}));
