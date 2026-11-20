@@ -591,7 +591,7 @@ $('cReset').addEventListener('click',()=>{own={};ui=Object.assign({},THEME);appl
 // Chỉ link Tất cả NCC (nội bộ) mới có nút lưu giao diện cho khách
 // Thanh công cụ nội bộ: chỉ hiện trên link "Tất cả NCC"
 if(MULTI&&window.TOKEN){const tk=encodeURIComponent(window.TOKEN),base=location.origin+location.pathname.replace(/[^/]*$/,''),nav=$('tools');
-  [['⚠ Cảnh báo giao hàng trễ','canhbao/?a='+tk],['⬆ Nhập chứng từ vận chuyển','quantri/?a='+tk],['🔎 Tra cứu đơn hàng','tracuu/?k='+tk]].forEach(x=>{const a=document.createElement('a');a.className='btn';a.href=base+x[1];a.target='_blank';a.rel='noopener';a.textContent=x[0];a.style.textDecoration='none';nav.appendChild(a)});
+  [['⚠ Cảnh báo giao hàng trễ','canhbao/?a='+tk],['⬆ Nhập chứng từ vận chuyển','quantri/?a='+tk],['🔎 Tra cứu đơn hàng','tracuu/?k='+tk]].forEach(x=>{const a=document.createElement('a');a.className='btn';a.href=base+x[1];a.target='_blank';a.rel='noopener';a.textContent=x[0];a.style.textDecoration='none';a.style.color='var(--card-ink)';a.style.fontWeight='600';nav.appendChild(a)});
   nav.style.display='flex'}
 if(MULTI&&window.API&&window.TOKEN){$('cSave').style.display='';$('cNote').style.display='';
   $('cSave').addEventListener('click',()=>{
