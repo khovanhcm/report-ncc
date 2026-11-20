@@ -88,7 +88,7 @@ svg text{fill:var(--muted);font-size:11px;font-family:var(--font)}
       <div class="scroll"><table id="det"></table></div>
       <div class="pager" id="pager"></div>
       <div class="rule"><b>Quy tắc tính hạn giao:</b> Các NCC lấy theo <b>Hạn PO</b> (cột F Sheet 2), tính theo mã PO. Riêng <b>KAROFI</b> lấy theo <b>leadtime hợp đồng</b>: ngày lấy hàng + số ngày tối đa theo tỉnh nhận (tỉnh trước sáp nhập, gửi từ Long An), tính theo DO.
-        Đơn tính đã giao khi tất cả chứng từ (không tính chứng từ huỷ) ở trạng thái "5 - Hoàn tất giao hàng" hoặc "FBC - Đã Trả Hàng"; ngày giao là ngày hoàn tất của chứng từ cuối cùng. Đơn có toàn bộ chứng từ huỷ không đưa vào cảnh báo.</div>
+        Đơn tính đã giao khi tất cả chứng từ (không tính chứng từ huỷ và "6 - Hoàn bill") ở trạng thái "5 - Hoàn tất giao hàng" hoặc "FBC - Đã Trả Hàng"; ngày giao là ngày hoàn tất của chứng từ cuối cùng. Chứng từ huỷ hoặc "6 - Hoàn bill" không tính trễ leadtime; đơn có toàn bộ chứng từ huỷ/hoàn bill không đưa vào cảnh báo.</div>
     </section>
   </div>
   <div class="load" id="load">Đang tải dữ liệu…</div>
@@ -143,6 +143,7 @@ function provFromKho(name){var s=nk(name),m=/(?:^|[^A-Z])[A-Z]{2,3}_\s?([A-Z]{3}
 
 var DAY=864e5,KRF='KAROFI',ALL=[],VIEW=[],state={per:'all',ncc:'',f:'',page:1};
 var isCancel=function(s){return/^(Huỷ|Hủy)/i.test(s||'')};
+var isExcl=function(s){return isCancel(s)||/^6\b/.test(String(s||'').trim())};  // huỷ, "6 - Hoàn bill": không tính trễ leadtime
 var ST={late:['Chưa giao, quá hạn','p-late'],today:['Đến hạn hôm nay','p-soon'],soon:['Sắp trễ','p-soon'],open:['Chưa giao, còn hạn','p-na'],dlate:['Đã giao trễ','p-dlate'],ok:['Đã giao đúng hạn','p-ok'],na:['Không có hạn / leadtime','p-na']};
 
 if(!A){$('load').textContent='Thiếu mã quản trị trong link (…/canhbao/?a=<mã link Tất cả NCC>).';return}
@@ -161,11 +162,11 @@ fetch(API+'?api=1&k='+encodeURIComponent(A)).then(function(r){return r.json()}).
   });
   ALL=Object.values(map).map(function(o){
     o.billList=Object.keys(o.bills);
-    var live=o.billList.filter(function(b){return!isCancel((B[b]||[])[0])});
+    var live=o.billList.filter(function(b){return!isExcl((B[b]||[])[0])});
     o.cancel=o.billList.length>0&&live.length===0;
     var dd=live.map(function(b){return pd((B[b]||[])[1]||'')});
     o.done=live.length&&dd.every(Boolean)?new Date(Math.max.apply(null,dd)):null;
-    o.st=live.map(function(b){return(B[b]||[])[0]||'Chưa có dữ liệu'}).filter(function(v,i,a){return a.indexOf(v)===i}).join(' · ')||(o.billList.length?'Huỷ':'Chưa có mã bill');
+    o.st=live.map(function(b){return(B[b]||[])[0]||'Chưa có dữ liệu'}).filter(function(v,i,a){return a.indexOf(v)===i}).join(' · ')||(o.billList.length?'Huỷ / Hoàn bill':'Chưa có mã bill');
     if(o.krf){var key=nk(o.prov),lt=LT[key];if(o.prov)o.prov=pdisp(key)||o.prov;
       o.basis=lt?'Leadtime HĐ '+lt[0]:(o.prov?'Chưa có leadtime ('+o.prov+')':'Chưa xác định tỉnh');
       o.due=(lt&&lt[1]!=null&&o.p)?new Date(o.p.getTime()+lt[1]*DAY):null;if(lt&&!o.p)o.basis+=' · chưa có ngày lấy hàng'}

@@ -118,7 +118,7 @@ footer{margin-top:22px;font-size:.78rem;text-align:center}
       <div class="dhead">
         <div class="grp">
           <input id="q" type="search" placeholder="Tìm DO, mã bill, mã PO, kho nhận…" style="min-width:280px">
-          <select id="fs"><option value="">Tất cả trạng thái</option><option value="ok">Đúng cam kết</option><option value="bad">Sai cam kết</option><option value="done">Đã hoàn tất</option><option value="wait">Chưa hoàn tất</option><option value="over">Chưa hoàn tất · quá thời gian dự kiến</option></select>
+          <select id="fs"><option value="">Tất cả trạng thái</option><option value="ok">Đúng cam kết</option><option value="bad">Sai cam kết</option><option value="done">Đã hoàn tất</option><option value="wait">Chưa hoàn tất</option><option value="over">Chưa hoàn tất · quá thời gian dự kiến</option><option value="ret">Hoàn bill / huỷ · không tính leadtime</option></select>
         </div>
         <div class="grp"><span class="sub" id="cnt"></span><button class="btn" id="xView">Xuất Excel danh sách đang lọc</button></div>
       </div>
@@ -211,7 +211,8 @@ fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).
     if(o.prov)o.prov=pdisp(key)||o.prov;
     o.st=st||(o.bill?'Chưa có dữ liệu':'Chưa có mã bill');o.done=done;o.lt=lt?lt[0]:(o.prov?'Chưa có trong hợp đồng':'');o.ltMax=lt?lt[1]:null;
     o.days=(done&&o.p)?Math.round((done-o.p)/864e5):null;
-    if(done){o.res=(o.ltMax!=null&&o.days!=null)?(o.days<=o.ltMax?'ok':'bad'):'done'}
+    if(!done&&(/^6\b/.test(String(st).trim())||/^(Huỷ|Hủy)/i.test(st))){o.res='ret'}  // "6 - Hoàn bill" / huỷ: không tính trễ leadtime
+    else if(done){o.res=(o.ltMax!=null&&o.days!=null)?(o.days<=o.ltMax?'ok':'bad'):'done'}
     else{o.res=(o.ltMax!=null&&o.p&&Math.round((TODAY-o.p)/864e5)>o.ltMax)?'over':'wait'}
     return o;
   }).filter(function(o){return o.b}).sort(function(a,b){return b.b-a.b});
@@ -235,25 +236,25 @@ function inPer(o){
   var p=state.per.slice(2).split('-');return o.b.getFullYear()==p[0]&&o.b.getMonth()+1==p[1];
 }
 function perText(){if(state.per==='all')return'toàn bộ dữ liệu';if(state.per==='30'){var a=new Date(TODAY);a.setDate(a.getDate()-29);return'30 ngày gần nhất ('+fd(a)+' – '+fd(TODAY)+')'}var p=state.per.slice(2).split('-');return'tháng '+p[1]+'/'+p[0]}
-var RES={ok:['Đúng cam kết','p-ok'],bad:['Sai cam kết','p-bad'],done:['Hoàn tất · không đánh giá','p-na'],wait:['Chưa hoàn tất','p-wait'],over:['Chưa hoàn tất · quá dự kiến','p-bad']};
+var RES={ok:['Đúng cam kết','p-ok'],bad:['Sai cam kết','p-bad'],done:['Hoàn tất · không đánh giá','p-na'],wait:['Chưa hoàn tất','p-wait'],over:['Chưa hoàn tất · quá dự kiến','p-bad'],ret:['Hoàn bill / huỷ · không tính leadtime','p-na']};
 function pct(a,b){return b?Math.round(a/b*1000)/10:0}
 function render(){
   document.querySelectorAll('#per .btn').forEach(function(b){b.classList.toggle('on',b.dataset.p===state.per)});
   var R=ALL.filter(inPer),done=R.filter(function(o){return o.done}),ok=R.filter(function(o){return o.res==='ok'}),bad=R.filter(function(o){return o.res==='bad'}),
-      wait=R.filter(function(o){return!o.done}),over=R.filter(function(o){return o.res==='over'});
+      wait=R.filter(function(o){return!o.done&&o.res!=='ret'}),ret=R.filter(function(o){return o.res==='ret'}),over=R.filter(function(o){return o.res==='over'});
   var judged=ok.length+bad.length,rate=pct(ok.length,judged),target=TODAY<TARGET_DATE?85:100;
   var F=$('fs').value;
   $('kpis').innerHTML=
    kpi('','Tổng DO',R.length.toLocaleString('vi'),perText(),F)+
    kpi('done','Đã hoàn tất giao',done.length.toLocaleString('vi')+' <small>/ '+R.length.toLocaleString('vi')+'</small>',pct(done.length,R.length)+'% số DO',F)+
-   kpi('wait','Chưa hoàn tất',wait.length.toLocaleString('vi'),over.length.toLocaleString('vi')+' DO đã quá thời gian dự kiến',F)+
+   kpi('wait','Chưa hoàn tất',wait.length.toLocaleString('vi'),over.length.toLocaleString('vi')+' DO đã quá thời gian dự kiến'+(ret.length?' · '+ret.length+' DO hoàn bill/huỷ không tính':''),F)+
    kpi('bad','Sai cam kết',bad.length.toLocaleString('vi'),pct(bad.length,judged)+'% trên '+judged.toLocaleString('vi')+' DO hoàn tất có leadtime',F)+
    '<div class="card kpi big'+(F==='ok'?' on':'')+'" data-k="ok" title="Bấm để xem danh sách DO đúng cam kết"><div class="l">Tỷ lệ đúng cam kết</div><div class="n">'+rate.toLocaleString('vi')+'%</div><div class="meter"><i style="width:'+Math.min(100,rate)+'%;background:'+(rate>=target?'var(--ok)':'var(--bad)')+'"></i><b style="left:'+target+'%"></b></div><div class="s">Mục tiêu '+target+'%'+(target===85?' (đến 01/12/2026)':'')+'</div><div class="go">Xem '+ok.length.toLocaleString('vi')+' DO đúng cam kết →</div></div>';
   chart(R);prov(R);detail(R);
 }
 function kpi(k,l,n,s,F){return'<div class="card kpi'+(F===k&&(k||!state.prov&&!state.day)?' on':'')+'" data-k="'+k+'" title="Bấm để xem danh sách DO"><div class="l">'+l+'</div><div class="n">'+n+'</div><div class="s">'+esc(s)+'</div><div class="go">Xem danh sách →</div></div>'}
 function chart(R){
-  var by={};R.forEach(function(o){if(!o.p)return;var k=+o.p;var c=by[k]||(by[k]=[0,0,0]);c[o.res==='ok'?0:o.res==='bad'?1:(o.done?0:2)]+=(o.res==='done'?0:1)});
+  var by={};R.forEach(function(o){if(!o.p)return;var k=+o.p;var c=by[k]||(by[k]=[0,0,0]);c[o.res==='ok'?0:o.res==='bad'?1:(o.done?0:2)]+=(o.res==='done'||o.res==='ret'?0:1)});
   var days=Object.keys(by).map(Number).sort(function(a,b){return a-b}).slice(-12);
   $('cSub').textContent=days.length?'12 ngày lấy hàng gần nhất trong kỳ · số DO':'Chưa có ngày lấy hàng trong kỳ';
   var W=1100,H=250,L=30,T=18,Bm=24,ph=H-T-Bm,pw=W-L-6,bw=pw/Math.max(1,days.length),max=1;
@@ -288,7 +289,7 @@ function detail(R){
   var q=$('q').value.trim().toLowerCase(),f=$('fs').value;
   VIEW=R.filter(function(o){
     if(state.prov&&(o.prov||'Chưa xác định')!==state.prov)return false;if(state.day&&(!o.p||+o.p!==+state.day))return false;
-    if(f==='ok'&&o.res!=='ok'||f==='bad'&&o.res!=='bad'||f==='done'&&!o.done||f==='wait'&&o.done||f==='over'&&o.res!=='over')return false;
+    if(f==='ok'&&o.res!=='ok'||f==='bad'&&o.res!=='bad'||f==='done'&&!o.done||f==='wait'&&(o.done||o.res==='ret')||f==='ret'&&o.res!=='ret'||f==='over'&&o.res!=='over')return false;
     return!q||[o.do,o.bill,o.po,o.kho,o.prov,o.st].some(function(x){return x&&String(x).toLowerCase().indexOf(q)>=0})});
   var per=50,pages=Math.max(1,Math.ceil(VIEW.length/per));if(state.page>pages)state.page=pages;
   var part=VIEW.slice((state.page-1)*per,state.page*per);

@@ -269,7 +269,9 @@ function build(ncc,all){
   const O=[...orders.values()].filter(o=>o.po),B=[...bills.values()];  // bộ đếm chỉ tính mã PO
   O.forEach(o=>{o.deliv=[...o.bills].map(deliv).filter(Boolean)[0]||'';
     // Giao trễ: ngày hoàn tất của bill cuối cùng của PO trừ hạn PO
-    const h=mk(o.han),dd=[...o.bills].map(b=>mk(deliv(b))),all=dd.length>0&&dd.every(Boolean);
+    const h=mk(o.han),live=[...o.bills].filter(b=>{const s=String((BILLS[b]&&BILLS[b][0])||'').trim();return!(/^6\b/.test(s)||isCancel(s))});  // "6 - Hoàn bill"/huỷ: không tính trễ
+    if(o.bills.size&&!live.length){o.last=null;o.lres=LATE[4];o.ldays='';return}
+    const dd=live.map(b=>mk(deliv(b))),all=dd.length>0&&dd.every(Boolean);
     o.last=all?new Date(Math.max.apply(null,dd)):null;
     if(!h){o.lres=LATE[4];o.ldays=''}
     else if(all){o.ldays=Math.round((o.last-h)/DAY);o.lres=o.ldays>0?LATE[0]:LATE[1]}
