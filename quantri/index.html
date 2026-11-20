@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Quản trị · Cập nhật chứng từ vận chuyển</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--font:"Be Vietnam Pro",system-ui,"Segoe UI",Arial,sans-serif;--bg:#F3F5F4;--ink:#14201C;--muted:#5E6B66;--card:#fff;--line:rgba(0,0,0,.12);--soft:#EEF3F1;
+  --accent:#0B6B5D;--ok:#1F7A4D;--ok-bg:#E3F3EA;--bad:#C0392B;--bad-bg:#FBE6E2;--wait:#8A5300;--wait-bg:#FFF1DC}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 16px 48px}
+.eyebrow{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+h1{margin:4px 0 2px;font-size:1.6rem;line-height:1.2}
+.sub{font-size:.86rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:14px}
+.card h2{margin:0 0 4px;font-size:1.05rem}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+.stat{background:var(--soft);border-radius:12px;padding:12px 14px}
+.stat .l{font-size:.78rem;color:var(--muted);font-weight:600}
+.stat .n{font-size:1.35rem;font-weight:700;margin-top:2px;word-break:break-word}
+.drop{margin-top:12px;border:2px dashed color-mix(in srgb,var(--accent) 45%,transparent);border-radius:14px;padding:34px 16px;text-align:center;cursor:pointer;background:color-mix(in srgb,var(--accent) 4%,var(--card));transition:background .15s}
+.drop.over,.drop:hover{background:color-mix(in srgb,var(--accent) 10%,var(--card))}
+.drop b{display:block;font-size:1.05rem;margin-bottom:4px}
+.btn{font:inherit;font-size:.9rem;font-weight:600;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.msg{border-radius:10px;padding:10px 14px;font-size:.88rem;margin-top:10px}
+.msg.ok{background:var(--ok-bg);color:var(--ok)}.msg.bad{background:var(--bad-bg);color:var(--bad)}.msg.warn{background:var(--wait-bg);color:var(--wait)}
+.msg ul{margin:4px 0 0;padding-left:18px}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--card);position:sticky;top:0}
+td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.scroll{overflow:auto;max-height:300px;margin-top:10px;border:1px solid var(--line);border-radius:10px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pill{font-size:.76rem;font-weight:600;border-radius:999px;padding:3px 10px;background:var(--soft)}
+.act{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.act label{display:flex;gap:8px;align-items:center;font-size:.88rem;font-weight:600;cursor:pointer}
+.act input{width:18px;height:18px;accent-color:var(--bad)}
+.prog{height:10px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.hide{display:none}
+@media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Quản trị · Kho vận Hồ Chí Minh</div>
+  <h1>Cập nhật data chứng từ vận chuyển</h1>
+  <div class="sub">Nhập file Excel xuất từ hệ thống vận chuyển. Data cũ ở sheet "3.DATA BILL GIAO HÀNG" sẽ được xoá và thay bằng data trong file, sau đó báo cáo các NCC tự làm mới.</div>
+
+  <section class="card" id="cur"><h2>Data hiện tại</h2><div class="sub" id="curSub">Đang kiểm tra…</div>
+    <div class="stats" id="curStats"></div></section>
+
+  <section class="card" id="up">
+    <h2>1. Chọn file Excel</h2>
+    <div class="sub">Chấp nhận .xlsx, .xls, .csv. Dòng tiêu đề phải có các cột như hệ thống xuất ra (Mã chứng từ, Mã chứng từ đối tác, Nơi nhận, Tỉnh nhận, Trạng thái giao hàng, Ngày cập nhật trạng thái…).</div>
+    <label class="drop" id="drop"><input type="file" id="file" accept=".xlsx,.xls,.csv" hidden><b>Kéo thả file vào đây hoặc bấm để chọn</b><span class="sub" id="fname">Chưa chọn file</span></label>
+    <div id="readMsg"></div>
+  </section>
+
+  <section class="card hide" id="pv">
+    <h2>2. Kiểm tra trước khi cập nhật</h2>
+    <div class="sub" id="pvSub"></div>
+    <div class="stats" id="pvStats"></div>
+    <div id="pvMsg"></div>
+    <div class="sub" style="margin-top:12px;font-weight:600">Trạng thái giao hàng trong file</div><div class="pills" id="pvSt"></div>
+    <div class="sub" style="margin-top:12px;font-weight:600">Xem trước 10 dòng đầu (các cột chính)</div>
+    <div class="scroll"><table id="pvTb"></table></div>
+    <div class="act">
+      <label><input type="checkbox" id="agree"> Tôi đồng ý xoá toàn bộ data cũ của Sheet 3 và thay bằng file này</label>
+      <div style="display:flex;gap:8px"><button class="btn" id="cancel">Chọn file khác</button><button class="btn danger" id="go" disabled>Xoá data cũ &amp; cập nhật</button></div>
+    </div>
+    <div class="hide" id="run"><div class="prog"><i id="bar"></i></div><div class="sub" id="runTxt" style="margin-top:6px"></div></div>
+    <div id="done"></div>
+  </section>
+</div>
+<script>
+(function(){
+var API='https:\/\/script.google.com/macros/s/AKfycbzRAMaclrPMA6xTRAS0ber2mcQk9YmSr3Fcre-MO2cbpNquWsgleVTP1Hh3Pzome1-R/exec';
+var A=new URLSearchParams(location.search).get('a')||'';
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var nk=function(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().replace(/\s+/g,' ').trim()};
+var REQ=['Mã chứng từ đối tác','Nơi nhận','Tỉnh nhận','Trạng thái giao hàng','Ngày cập nhật trạng thái'];
+var KEY=['Mã chứng từ','Mã chứng từ đối tác','Thời gian tạo','Nơi nhận','Tỉnh nhận','Trạng thái giao hàng','Ngày cập nhật trạng thái','Tên khách hàng'];
+var TPL=[],DATA=null;
+function msg(id,cls,html){$(id).innerHTML=html?'<div class="msg '+cls+'">'+html+'</div>':''}
+function stat(l,n){return'<div class="stat"><div class="l">'+l+'</div><div class="n">'+n+'</div></div>'}
+function post(o){o.k=A;return fetch(API,{method:'POST',body:JSON.stringify(o)}).then(function(r){return r.json()})}
+
+if(!A){$('curSub').textContent='Thiếu mã quản trị trong link (…/quantri/?a=<mã link Tất cả NCC>).';$('up').classList.add('hide')}
+else loadStatus();
+function loadStatus(){
+  post({op:'status'}).then(function(r){
+    if(!r.ok){$('curSub').textContent=r.error||'Không đọc được trạng thái.';$('up').classList.add('hide');return}
+    TPL=r.header||[];
+    $('curSub').textContent='Sheet "3.DATA BILL GIAO HÀNG"';
+    $('curStats').innerHTML=stat('Số dòng chứng từ',r.rows.toLocaleString('vi'))+stat('Số cột',TPL.filter(Boolean).length)
+      +stat('Lần nhập gần nhất',r.last?esc(r.last.time):'—')+stat('File đã nhập',r.last?esc(r.last.file||'—')+' <span class="sub">('+r.last.rows.toLocaleString('vi')+' dòng)</span>':'—');
+  }).catch(function(){$('curSub').textContent='Không kết nối được máy chủ. Tải lại trang để thử lại.'});
+}
+
+// ---- Đọc file
+var drop=$('drop');
+['dragover','dragenter'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.add('over')})});
+['dragleave','drop'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.remove('over')})});
+drop.addEventListener('drop',function(e){var f=e.dataTransfer.files[0];if(f)readFile(f)});
+$('file').addEventListener('change',function(){if(this.files[0])readFile(this.files[0])});
+function needXLSX(){return window.XLSX?Promise.resolve():new Promise(function(ok,no){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+function serial(y,m,d,h,mi,se){return Date.UTC(y,m-1,d,h||0,mi||0,se||0)/864e5+25569}
+var DRX=/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/;
+function readFile(f){
+  $('fname').textContent=f.name+' · '+(f.size/1048576).toFixed(1)+' MB';
+  msg('readMsg','warn','Đang đọc file…');$('pv').classList.add('hide');DATA=null;
+  needXLSX().then(function(){return f.arrayBuffer()}).then(function(buf){
+    var wb=XLSX.read(buf,{type:'array',cellDates:false,cellNF:true,raw:true});
+    var ws=wb.Sheets[wb.SheetNames[0]];if(!ws||!ws['!ref'])throw new Error('File không có dữ liệu.');
+    var rg=XLSX.utils.decode_range(ws['!ref']);
+    var cellVal=function(r,c){var a=ws[XLSX.utils.encode_cell({r:r,c:c})];if(!a||a.v==null||a.v==='')return['',0];
+      if(a.t==='n'&&a.z&&XLSX.SSF.is_date(a.z))return[a.v,1];
+      if(a.t==='d'){var d=a.v;return[serial(d.getFullYear(),d.getMonth()+1,d.getDate(),d.getHours(),d.getMinutes(),d.getSeconds()),1]}
+      if(a.t==='s'){var s=String(a.v).trim(),m=DRX.exec(s);if(m&&+m[2]<=12)return[serial(+m[3],+m[2],+m[1],+m[4],+m[5],+m[6]),1];return[/^[=+]/.test(s)?"'"+s:s,0]}
+      return[a.v,0]};
+    // tìm dòng tiêu đề trong 15 dòng đầu
+    var hr=-1;for(var r=rg.s.r;r<=Math.min(rg.e.r,rg.s.r+15)&&hr<0;r++)for(var c=rg.s.c;c<=rg.e.c;c++){var v=cellVal(r,c)[0];if(nk(v)===nk('Mã chứng từ đối tác')){hr=r;break}}
+    if(hr<0)throw new Error('Không tìm thấy dòng tiêu đề có cột "Mã chứng từ đối tác". Kiểm tra lại file xuất từ hệ thống.');
+    var xh=[];for(c=rg.s.c;c<=rg.e.c;c++)xh.push(String(cellVal(hr,c)[0]||'').trim());
+    while(xh.length&&!xh[xh.length-1])xh.pop();
+    // ghép cột theo tiêu đề Sheet 3 hiện tại (tên + thứ tự lần xuất hiện)
+    var keyOf=function(arr){var seen={};return arr.map(function(h){var k=nk(h);seen[k]=(seen[k]||0)+1;return k+'#'+seen[k]})};
+    var tpl=TPL.filter(function(h,i){return h||i<TPL.length}).slice();while(tpl.length&&!tpl[tpl.length-1])tpl.pop();
+    if(!tpl.length)tpl=xh.slice();
+    var tk=keyOf(tpl),xk=keyOf(xh),xi={};xk.forEach(function(k,i){xi[k]=i});
+    var map=tk.map(function(k){return xi[k]==null?-1:xi[k]});
+    var missing=tpl.filter(function(h,i){return h&&map[i]<0});
+    var used={};map.forEach(function(i){if(i>=0)used[i]=1});
+    var extra=[];xh.forEach(function(h,i){if(h&&!used[i]){extra.push(h);map.push(i);tpl.push(h)}});
+    var reqMiss=REQ.filter(function(h){return tpl.indexOf(h)<0||map[tpl.indexOf(h)]<0});
+    if(reqMiss.length)throw new Error('File thiếu cột bắt buộc: '+reqMiss.join(', ')+'.');
+    // đọc dữ liệu
+    var rows=[],dateCol={},skip=0,iBill=tpl.indexOf('Mã chứng từ đối tác'),iCt=tpl.indexOf('Mã chứng từ');
+    for(r=hr+1;r<=rg.e.r;r++){var row=new Array(map.length),any=false;
+      for(var j=0;j<map.length;j++){if(map[j]<0){row[j]='';continue}var cv=cellVal(r,rg.s.c+map[j]);row[j]=cv[0];if(cv[1])dateCol[j]=1;if(cv[0]!=='')any=true}
+      if(!any)continue;
+      if(!String(row[iBill]||'').trim()&&!(iCt>=0&&String(row[iCt]||'').trim())){skip++;continue}
+      rows.push(row)}
+    if(!rows.length)throw new Error('File không có dòng chứng từ nào.');
+    DATA={file:f.name,header:tpl,rows:rows,dateCols:Object.keys(dateCol).map(Number),missing:missing,extra:extra,skip:skip};
+    msg('readMsg','','');preview();
+  }).catch(function(e){msg('readMsg','bad',esc(e&&e.message||'Không đọc được file. Kiểm tra lại định dạng.'))});
+}
+function fmt(v,j){if(v===''||v==null)return'';if(DATA.dateCols.indexOf(j)>=0&&typeof v==='number'){var d=new Date(Math.round((v-25569)*864e5));var p=function(n){return('0'+n).slice(-2)};return p(d.getUTCDate())+'/'+p(d.getUTCMonth()+1)+'/'+d.getUTCFullYear()+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes())}return String(v)}
+function preview(){
+  var D=DATA,h=D.header,iB=h.indexOf('Mã chứng từ đối tác'),iT=h.indexOf('Thời gian tạo'),iS=h.indexOf('Trạng thái giao hàng');
+  var bills={},dup=0,mn=Infinity,mx=-Infinity,st={};
+  D.rows.forEach(function(r){var b=String(r[iB]||'').trim();if(b){if(bills[b])dup++;bills[b]=1}
+    if(iT>=0&&typeof r[iT]==='number'){if(r[iT]<mn)mn=r[iT];if(r[iT]>mx)mx=r[iT]}
+    var s=String(r[iS]||'(trống)');st[s]=(st[s]||0)+1});
+  $('pvSub').textContent='File: '+D.file;
+  $('pvStats').innerHTML=stat('Số dòng sẽ ghi',D.rows.length.toLocaleString('vi'))+stat('Số mã chứng từ đối tác',Object.keys(bills).length.toLocaleString('vi'))
+    +stat('Thời gian tạo',mn<Infinity?fmt(mn,iT).slice(0,10)+' – '+fmt(mx,iT).slice(0,10):'—')+stat('Số cột',h.length);
+  var w=[];
+  if(D.missing.length)w.push('File thiếu '+D.missing.length+' cột so với Sheet 3 (sẽ để trống): '+esc(D.missing.join(', ')));
+  if(D.extra.length)w.push('File có thêm '+D.extra.length+' cột mới (sẽ ghi vào cuối Sheet 3): '+esc(D.extra.join(', ')));
+  if(dup)w.push(dup.toLocaleString('vi')+' dòng trùng mã chứng từ đối tác (vẫn ghi đủ như file).');
+  if(D.skip)w.push('Bỏ qua '+D.skip+' dòng không có mã chứng từ.');
+  $('pvMsg').innerHTML=w.length?'<div class="msg warn"><b>Lưu ý</b><ul>'+w.map(function(x){return'<li>'+x+'</li>'}).join('')+'</ul></div>':'<div class="msg ok">Cột trong file khớp đầy đủ với Sheet 3.</div>';
+  $('pvSt').innerHTML=Object.keys(st).sort(function(a,b){return st[b]-st[a]}).map(function(k){return'<span class="pill">'+esc(k)+' · '+st[k].toLocaleString('vi')+'</span>'}).join('');
+  var ks=KEY.map(function(k){return h.indexOf(k)}).filter(function(i){return i>=0});
+  $('pvTb').innerHTML='<thead><tr>'+ks.map(function(i){return'<th>'+esc(h[i])+'</th>'}).join('')+'</tr></thead><tbody>'
+    +D.rows.slice(0,10).map(function(r){return'<tr>'+ks.map(function(i){return'<td title="'+esc(fmt(r[i],i))+'">'+esc(fmt(r[i],i))+'</td>'}).join('')+'</tr>'}).join('')+'</tbody>';
+  $('agree').checked=false;$('go').disabled=true;$('done').innerHTML='';$('run').classList.add('hide');
+  $('pv').classList.remove('hide');$('pv').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('agree').addEventListener('change',function(){$('go').disabled=!this.checked});
+$('cancel').addEventListener('click',function(){$('pv').classList.add('hide');$('file').value='';$('fname').textContent='Chưa chọn file';DATA=null;window.scrollTo({top:0,behavior:'smooth'})});
+
+// ---- Ghi lên Sheet 3: ghi vào sheet tạm theo từng phần, đủ dữ liệu mới thay Sheet 3
+$('go').addEventListener('click',function(){
+  if(!DATA)return;var D=DATA,N=D.rows.length,CH=2500,sent=0;
+  ['go','cancel','agree'].forEach(function(i){$(i).disabled=true});$('run').classList.remove('hide');$('done').innerHTML='';
+  var prog=function(t,p){$('runTxt').textContent=t;$('bar').style.width=p+'%'};
+  var chk=function(r){if(!r||!r.ok)throw new Error(r&&r.error||'Máy chủ không phản hồi');return r};
+  prog('Đang chuẩn bị…',2);
+  post({op:'begin',header:D.header,total:N,dateCols:D.dateCols}).then(chk).then(function next(){
+    if(sent>=N)return null;var part=D.rows.slice(sent,sent+CH),st=sent;
+    return post({op:'chunk',header:D.header,start:st,rows:part}).then(chk).then(function(){sent+=part.length;prog('Đã gửi '+sent.toLocaleString('vi')+' / '+N.toLocaleString('vi')+' dòng…',5+sent/N*80);return next()});
+  }).then(function(){prog('Đang xoá data cũ và thay bằng data mới trên Sheet 3…',90);
+    return post({op:'commit',header:D.header,total:N,file:D.file}).then(chk)
+  }).then(function(r){prog('Hoàn tất',100);
+    $('done').innerHTML='<div class="msg ok"><b>Đã cập nhật '+r.rows.toLocaleString('vi')+' dòng chứng từ vào Sheet 3.</b> Báo cáo các NCC đang tự làm mới, khoảng 2 phút nữa link khách sẽ hiện data mới.</div>';
+    $('file').value='';DATA=null;loadStatus();
+  }).catch(function(e){$('cancel').disabled=false;
+    $('done').innerHTML='<div class="msg bad"><b>Chưa cập nhật được:</b> '+esc(e&&e.message||e)+'. Data cũ trên Sheet 3 vẫn giữ nguyên. Bấm "Chọn file khác" để thử lại.</div>';
+    post({op:'cancel',header:D.header}).catch(function(){})});
+});
+})();
+</script>
+</body>
+</html>

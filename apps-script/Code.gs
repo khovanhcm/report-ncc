@@ -8,6 +8,7 @@
 var CACHE_FOLDER = 'Report NCC - data';
 var TRACUU_URL = 'https://khovanhcm.github.io/report-ncc/tracuu/';
 var SHEET_LINK = '5. LINK NCC';
+var QUANTRI_URL = 'https://khovanhcm.github.io/report-ncc/quantri/';
 var REPORT_RIENG = { 'KAROFI': 'https://khovanhcm.github.io/report-ncc/baocao-karofi/' };  // báo cáo riêng theo NCC (khoá = tên NCC viết hoa không dấu)
 var ALL_NAME = 'Tất cả NCC';
 var DONE = '5 - Hoàn tất giao hàng';
@@ -174,7 +175,7 @@ function setupLinks() {
   sh.clear();
   sh.getRange('A1:B2').setValues([['URL web app (dán link kết thúc bằng /exec vào ô B1)', url],
     ['URL trang khách GitHub Pages (để trống nếu chưa có)', page]]);
-  sh.getRange('A3:F3').setValues([['Tên NCC', 'Mã link (đổi mã = thu hồi link cũ)', 'Link gửi khách', 'Link tra cứu đơn hàng', 'Link báo cáo riêng (gửi khách)', 'Link quản trị báo cáo riêng (KHÔNG gửi khách)']]).setFontWeight('bold');
+  sh.getRange('A3:F3').setValues([['Tên NCC', 'Mã link (đổi mã = thu hồi link cũ)', 'Link gửi khách', 'Link tra cứu đơn hàng', 'Link báo cáo riêng (gửi khách)', 'Link quản trị (KHÔNG gửi khách)']]).setFontWeight('bold');
   var rows = names.map(function (n) {
     return [n, old[nkey_(n)] || Utilities.getUuid().replace(/-/g, '').slice(0, 16)];
   });
@@ -183,6 +184,7 @@ function setupLinks() {
   for (var i = 0; i < rows.length; i++) {
     sh.getRange(4 + i, 3).setFormula('=IF($B$2<>"",$B$2,$B$1)&"?k="&B' + (4 + i));
     sh.getRange(4 + i, 4).setFormula('="' + TRACUU_URL + '?k="&B' + (4 + i));  // trang tra cứu đơn hàng, tự sinh theo mã
+    if (rows[i][0] === ALL_NAME) sh.getRange(4 + i, 6).setFormula('="' + QUANTRI_URL + '?a="&B' + (4 + i));  // trang nhập chứng từ vận chuyển
     var rp = REPORT_RIENG[nkey_(rows[i][0])];  // NCC có báo cáo riêng (vd KAROFI)
     if (rp) {
       sh.getRange(4 + i, 5).setFormula('="' + rp + '?k="&B' + (4 + i));
@@ -328,6 +330,72 @@ function refreshAfterImport() {
     if (t.getHandlerFunction() === 'refreshAfterImport') ScriptApp.deleteTrigger(t);
   });
   refreshAll();
+}
+
+/* ---------- Trang quản trị: nhập file Excel chứng từ vận chuyển vào Sheet 3 ----------
+ * Trang quantri/ gửi dữ liệu theo từng phần (POST, text/plain). Chỉ mã link "Tất cả NCC" được dùng.
+ * Ghi vào sheet tạm trước, đủ dữ liệu mới thay toàn bộ Sheet 3 -> lỗi giữa chừng không làm hỏng data cũ.
+ */
+var BILL_TMP = '_NHAP_BILL_TAM';
+function doPost(e) {
+  var out;
+  try {
+    var b = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (tokenMap_()[String(b.k || '').trim()] !== ALL_NAME) out = { ok: false, error: 'Link quản trị không hợp lệ.' };
+    else out = billImport_(b);
+  } catch (err) { out = { ok: false, error: String(err && err.message || err) }; }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function billImport_(b) {
+  var ss = SpreadsheetApp.getActive(), P = PropertiesService.getScriptProperties();
+  if (b.op === 'status') {
+    var s3 = sheetByPrefix_('3.'), lc = Math.max(1, s3.getLastColumn());
+    return { ok: true, header: s3.getRange(1, 1, 1, lc).getDisplayValues()[0], rows: Math.max(0, s3.getLastRow() - 1),
+      last: JSON.parse(P.getProperty('LAST_BILL_IMPORT') || 'null') };
+  }
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return { ok: false, error: 'Đang có lượt nhập khác, thử lại sau ít phút.' };
+  try {
+    var cols = (b.header || []).length;
+    if (b.op === 'begin') {
+      if (cols < 5) return { ok: false, error: 'Thiếu dòng tiêu đề.' };
+      var old = ss.getSheetByName(BILL_TMP); if (old) ss.deleteSheet(old);
+      var t = ss.insertSheet(BILL_TMP); t.hideSheet();
+      var need = (+b.total || 0) + 1;
+      if (t.getMaxRows() < need) t.insertRowsAfter(t.getMaxRows(), need - t.getMaxRows());
+      if (t.getMaxColumns() < cols) t.insertColumnsAfter(t.getMaxColumns(), cols - t.getMaxColumns());
+      t.getRange(1, 1, 1, cols).setValues([b.header]);
+      (b.dateCols || []).forEach(function (c) { t.getRange(2, c + 1, need, 1).setNumberFormat('dd/mm/yyyy hh:mm'); });
+      return { ok: true };
+    }
+    var tmp = ss.getSheetByName(BILL_TMP);
+    if (!tmp) return { ok: false, error: 'Phiên nhập đã hết hạn, chọn lại file và nhập lại.' };
+    if (b.op === 'chunk') {
+      var rows = (b.rows || []).map(function (r) { r = r.slice(0, cols); while (r.length < cols) r.push(''); return r; });
+      if (rows.length) tmp.getRange(2 + (+b.start || 0), 1, rows.length, cols).setValues(rows);
+      return { ok: true, n: rows.length };
+    }
+    if (b.op === 'commit') {
+      var n = tmp.getLastRow() - 1, tc = tmp.getLastColumn();
+      if (n !== +b.total) return { ok: false, error: 'Số dòng nhận được (' + n + ') khác số dòng trong file (' + b.total + '). Chưa thay data, vui lòng nhập lại.' };
+      var s3b = sheetByPrefix_('3.');
+      s3b.getRange(1, 1, s3b.getMaxRows(), s3b.getMaxColumns()).clearContent();
+      if (s3b.getMaxRows() < n + 1) s3b.insertRowsAfter(s3b.getMaxRows(), n + 1 - s3b.getMaxRows());
+      if (s3b.getMaxColumns() < tc) s3b.insertColumnsAfter(s3b.getMaxColumns(), tc - s3b.getMaxColumns());
+      tmp.getRange(1, 1, n + 1, tc).copyTo(s3b.getRange(1, 1));
+      ss.deleteSheet(tmp);
+      SpreadsheetApp.flush();
+      var info = { time: Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'HH:mm dd/MM/yyyy'), rows: n, file: String(b.file || '').slice(0, 120) };
+      P.setProperty('LAST_BILL_IMPORT', JSON.stringify(info));
+      // làm mới data báo cáo các NCC sau khi thay Sheet 3 (chạy riêng để không quá thời gian)
+      ScriptApp.getProjectTriggers().forEach(function (tr) { if (tr.getHandlerFunction() === 'refreshAfterImport') ScriptApp.deleteTrigger(tr); });
+      ScriptApp.newTrigger('refreshAfterImport').timeBased().after(20 * 1000).create();
+      return { ok: true, rows: n, info: info };
+    }
+    if (b.op === 'cancel') { ss.deleteSheet(tmp); return { ok: true }; }
+    return { ok: false, error: 'Thao tác không hợp lệ.' };
+  } finally { lock.releaseLock(); }
 }
 
 function importAll() {
