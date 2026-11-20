@@ -9,6 +9,7 @@ var CACHE_FOLDER = 'Report NCC - data';
 var TRACUU_URL = 'https://khovanhcm.github.io/report-ncc/tracuu/';
 var SHEET_LINK = '5. LINK NCC';
 var QUANTRI_URL = 'https://khovanhcm.github.io/report-ncc/quantri/';
+var CANHBAO_URL = 'https://khovanhcm.github.io/report-ncc/canhbao/';
 var REPORT_RIENG = { 'KAROFI': 'https://khovanhcm.github.io/report-ncc/baocao-karofi/' };  // báo cáo riêng theo NCC (khoá = tên NCC viết hoa không dấu)
 var ALL_NAME = 'Tất cả NCC';
 var DONE = '5 - Hoàn tất giao hàng';
@@ -175,7 +176,7 @@ function setupLinks() {
   sh.clear();
   sh.getRange('A1:B2').setValues([['URL web app (dán link kết thúc bằng /exec vào ô B1)', url],
     ['URL trang khách GitHub Pages (để trống nếu chưa có)', page]]);
-  sh.getRange('A3:F3').setValues([['Tên NCC', 'Mã link (đổi mã = thu hồi link cũ)', 'Link gửi khách', 'Link tra cứu đơn hàng', 'Link báo cáo riêng (gửi khách)', 'Link quản trị (KHÔNG gửi khách)']]).setFontWeight('bold');
+  sh.getRange('A3:G3').setValues([['Tên NCC', 'Mã link (đổi mã = thu hồi link cũ)', 'Link gửi khách', 'Link tra cứu đơn hàng', 'Link báo cáo riêng (gửi khách)', 'Link quản trị (KHÔNG gửi khách)', 'Link cảnh báo nội bộ (KHÔNG gửi khách)']]).setFontWeight('bold');
   var rows = names.map(function (n) {
     return [n, old[nkey_(n)] || Utilities.getUuid().replace(/-/g, '').slice(0, 16)];
   });
@@ -184,14 +185,17 @@ function setupLinks() {
   for (var i = 0; i < rows.length; i++) {
     sh.getRange(4 + i, 3).setFormula('=IF($B$2<>"",$B$2,$B$1)&"?k="&B' + (4 + i));
     sh.getRange(4 + i, 4).setFormula('="' + TRACUU_URL + '?k="&B' + (4 + i));  // trang tra cứu đơn hàng, tự sinh theo mã
-    if (rows[i][0] === ALL_NAME) sh.getRange(4 + i, 6).setFormula('="' + QUANTRI_URL + '?a="&B' + (4 + i));  // trang nhập chứng từ vận chuyển
+    if (rows[i][0] === ALL_NAME) {
+      sh.getRange(4 + i, 6).setFormula('="' + QUANTRI_URL + '?a="&B' + (4 + i));  // trang nhập chứng từ vận chuyển
+      sh.getRange(4 + i, 7).setFormula('="' + CANHBAO_URL + '?a="&B' + (4 + i));  // trang cảnh báo giao hàng trễ
+    }
     var rp = REPORT_RIENG[nkey_(rows[i][0])];  // NCC có báo cáo riêng (vd KAROFI)
     if (rp) {
       sh.getRange(4 + i, 5).setFormula('="' + rp + '?k="&B' + (4 + i));
       sh.getRange(4 + i, 6).setFormula('="' + rp + '?k="&B' + (4 + i) + '&"&a=' + allTok + '"');
     }
   }
-  sh.autoResizeColumns(1, 6);
+  sh.autoResizeColumns(1, 7);
 }
 
 function tokenMap_() {
