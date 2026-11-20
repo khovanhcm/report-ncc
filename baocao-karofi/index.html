@@ -110,16 +110,16 @@ var LT={'CAN THO':['1-2 ngày',2],'DA NANG':['3-5 ngày',5],'DAK LAK':['3-5 ngà
  'HO CHI MINH':['1-2 ngày',2],'TP.HCM':['1-2 ngày',2],'LAM DONG':['3-5 ngày',5],'QUANG NGAI':['4-6 ngày',6],'DONG NAI':['2-4 ngày',4],'AN GIANG':['2-4 ngày',4],
  'CA MAU':['2-4 ngày',4],'VINH LONG':['1-2 ngày',2],'TAY NINH':['1-2 ngày',2],'GIA LAI':['4-6 ngày',6],'HUE':['4-6 ngày',6],'THUA THIEN HUE':['4-6 ngày',6],
  'QUANG TRI':['5-7 ngày',7],'BINH DINH':['4-6 ngày',6],'PHU YEN':['4-6 ngày',6],'BINH DUONG':['1-3 ngày',3],'PHU QUOC':['2-4 ngày',4]};
-var DISP={'CAN THO':'Thành phố Cần Thơ','DA NANG':'Thành phố Đà Nẵng','DAK LAK':'Tỉnh Đắk Lắk','DONG THAP':'Tỉnh Đồng Tháp','KHANH HOA':'Tỉnh Khánh Hòa','HO CHI MINH':'Thành phố Hồ Chí Minh','LAM DONG':'Tỉnh Lâm Đồng','QUANG NGAI':'Tỉnh Quảng Ngãi','DONG NAI':'Tỉnh Đồng Nai','AN GIANG':'Tỉnh An Giang','CA MAU':'Tỉnh Cà Mau','VINH LONG':'Tỉnh Vĩnh Long','TAY NINH':'Tỉnh Tây Ninh','GIA LAI':'Tỉnh Gia Lai','HUE':'Thành phố Huế','QUANG TRI':'Tỉnh Quảng Trị','BINH DINH':'Bình Định','PHU YEN':'Phú Yên','BINH DUONG':'Bình Dương','PHU QUOC':'Phú Quốc (An Giang)'};
-var HCM='Thành phố Hồ Chí Minh',DN='Thành phố Đà Nẵng',CT='Thành phố Cần Thơ',KH='Tỉnh Khánh Hòa',LD='Tỉnh Lâm Đồng',GL='Tỉnh Gia Lai',QNG='Tỉnh Quảng Ngãi',DL='Tỉnh Đắk Lắk',DT='Tỉnh Đồng Tháp',AG='Tỉnh An Giang',TN='Tỉnh Tây Ninh',CM='Tỉnh Cà Mau',VL='Tỉnh Vĩnh Long',DNA='Tỉnh Đồng Nai',HUE='Thành phố Huế',QT='Tỉnh Quảng Trị';
-var REG={HCM:HCM,BDU:HCM,BRV:HCM,VTA:HCM,DNA:DN,QNA:DN,KHH:KH,NTH:KH,LDO:LD,DNO:LD,BTH:LD,GLA:GL,BDI:GL,QNG:QNG,KTU:QNG,DLA:DL,PYE:DL,CTH:CT,STR:CT,HGI:CT,TGI:DT,DTH:DT,KGI:AG,AGI:AG,LAN:TN,TNI:TN,CMA:CM,BLI:CM,VLO:VL,TVI:VL,BTR:VL,DON:DNA,DNI:DNA,BPH:DNA,DNG:LD,TTH:HUE,HUE:HUE,QTR:QT,QBI:QT};
+var DISP={'CAN THO':'Thành phố Cần Thơ','DA NANG':'Thành phố Đà Nẵng','DAK LAK':'Tỉnh Đắk Lắk','DONG THAP':'Tỉnh Đồng Tháp','KHANH HOA':'Tỉnh Khánh Hòa','HO CHI MINH':'Thành phố Hồ Chí Minh','LAM DONG':'Tỉnh Lâm Đồng','QUANG NGAI':'Tỉnh Quảng Ngãi','DONG NAI':'Tỉnh Đồng Nai','AN GIANG':'Tỉnh An Giang','CA MAU':'Tỉnh Cà Mau','VINH LONG':'Tỉnh Vĩnh Long','TAY NINH':'Tỉnh Tây Ninh','GIA LAI':'Tỉnh Gia Lai','HUE':'Thành phố Huế','QUANG TRI':'Tỉnh Quảng Trị','BINH DINH':'Bình Định','PHU YEN':'Phú Yên','BINH DUONG':'Tỉnh Bình Dương','PHU QUOC':'Phú Quốc (An Giang)'};
+var HCM='Thành phố Hồ Chí Minh',BDG='Tỉnh Bình Dương',BRVT='Tỉnh Bà Rịa - Vũng Tàu',DN='Thành phố Đà Nẵng',CT='Thành phố Cần Thơ',KH='Tỉnh Khánh Hòa',LD='Tỉnh Lâm Đồng',GL='Tỉnh Gia Lai',QNG='Tỉnh Quảng Ngãi',DL='Tỉnh Đắk Lắk',DT='Tỉnh Đồng Tháp',AG='Tỉnh An Giang',TN='Tỉnh Tây Ninh',CM='Tỉnh Cà Mau',VL='Tỉnh Vĩnh Long',DNA='Tỉnh Đồng Nai',HUE='Thành phố Huế',QT='Tỉnh Quảng Trị';
+var REG={HCM:HCM,BDU:BDG,BRV:BRVT,VTA:BRVT,DNA:DN,QNA:DN,KHH:KH,NTH:KH,LDO:LD,DNO:LD,BTH:LD,GLA:GL,BDI:GL,QNG:QNG,KTU:QNG,DLA:DL,PYE:DL,CTH:CT,STR:CT,HGI:CT,TGI:DT,DTH:DT,KGI:AG,AGI:AG,LAN:TN,TNI:TN,CMA:CM,BLI:CM,VLO:VL,TVI:VL,BTR:VL,DON:DNA,DNI:DNA,BPH:DNA,DNG:LD,TTH:HUE,HUE:HUE,QTR:QT,QBI:QT};
 var KW=[['BUON MA THUO',DL],['KRONG',DL],['TUY HOA',DL],['PHU YEN',DL],['DAK LAK',DL],['PLEIKU',GL],['QUY NHON',GL],['BINH DINH',GL],['KBANG',GL],['NHA TRANG',KH],['CAM RANH',KH],['NINH HOA',KH],['PHAN RANG',KH],
  ['KON TUM',QNG],['DAK TO',QNG],['QUANG NGAI',QNG],['PHAN THIET',LD],['DUC TRONG',LD],['DAK NONG',LD],['BAO LOC',LD],['DA LAT',LD],['NHAN CO',LD],['BIEN HOA',DNA],['TRANG BOM',DNA],['THONG NHAT',DNA],['LONG THANH',DNA],['BINH PHUOC',DNA],['DONG NAI',DNA],
- ['BA RIA',HCM],['VUNG TAU',HCM],['BEN CAT',HCM],['BINH DUONG',HCM],['THU DUC',HCM],['TAN BINH',HCM],['HO CHI MINH',HCM],['CMT8',HCM],['PHU QUOC',AG],['CHAU DOC',AG],['LONG XUYEN',AG],['RACH GIA',AG],['AN GIANG',AG],
+ ['BA RIA',BRVT],['VUNG TAU',BRVT],['BEN CAT',BDG],['BINH DUONG',BDG],['THU DAU MOT',BDG],['TAN UYEN',BDG],['THU DUC',HCM],['TAN BINH',HCM],['HO CHI MINH',HCM],['CMT8',HCM],['PHU QUOC',AG],['CHAU DOC',AG],['LONG XUYEN',AG],['RACH GIA',AG],['AN GIANG',AG],
  ['BEN LUC',TN],['TAN AN',TN],['DUC HOA',TN],['TRANG BANG',TN],['TAY NINH',TN],['CAN THO',CT],['CAI RANG',CT],['SOC TRANG',CT],['VI THANH',CT],['MY THO',DT],['TIEN GIANG',DT],['CAO LANH',DT],['DONG THAP',DT],
- ['KIEN DUC',LD],['CU JUT',LD],['DAK MIL',LD],['DA TEH',LD],['CU CHI',HCM],['BINH CHANH',HCM],['GO VAP',HCM],['TAN PHU',HCM],['QUAN ',HCM],['DI AN',HCM],['THUAN AN',HCM],['LINH DONG',HCM],['TAN THUAN',HCM],['TAN CANG',HCM],['BINH THANH',HCM],['TAN TAO',HCM],
+ ['KIEN DUC',LD],['CU JUT',LD],['DAK MIL',LD],['DA TEH',LD],['CU CHI',HCM],['BINH CHANH',HCM],['GO VAP',HCM],['TAN PHU',HCM],['QUAN ',HCM],['DI AN',BDG],['THUAN AN',BDG],['LINH DONG',HCM],['TAN THUAN',HCM],['TAN CANG',HCM],['BINH THANH',HCM],['TAN TAO',HCM],
  ['LONG HO',VL],['CAI LAY',DT],['GO CONG',DT],['HONG NGU',DT],['SA DEC',DT],['THAP MUOI',DT],['KIEN GIANG',AG],['QUANG NAM',DN],['HOI A',DN],['QUANG BINH',QT],['BMT',DL],['CA MAU',CM],['BAC LIEU',CM],['VINH LONG',VL],['BEN TRE',VL],['TRA VINH',VL],['DA NANG',DN],['CAM LE',DN],['LIEN CHIEU',DN],['DIEN BAN',DN],['TAM KY',DN],['THANG BINH',DN],['HOI AN',DN],['HUE',HUE],['QUANG TRI',QT],['DONG HA',QT],['DONG HOI',QT]];
-var SHOP={BDG:HCM,BAR:HCM,HCM:HCM,BPC:DNA,DNI:DNA,TNH:TN,LAN:TN,CMU:CM,VLG:VL,AGG:AG,CTO:CT,DTP:DT,KHA:KH,LDG:LD,DLK:DL,GLI:GL,DNG:DN};
+var SHOP={BDG:BDG,BAR:BRVT,HCM:HCM,BPC:DNA,DNI:DNA,TNH:TN,LAN:TN,CMU:CM,VLG:VL,AGG:AG,CTO:CT,DTP:DT,KHA:KH,LDG:LD,DLK:DL,GLI:GL,DNG:DN};
 function provFromKho(name){var s=nk(name),m=/(?:^|[^A-Z])[A-Z]{2,3}_\s?([A-Z]{3})(?![A-Z])/.exec(s);if(m&&REG[m[1]])return REG[m[1]];
   var m2=/^\d+\s+([A-Z]{3})\s/.exec(s);if(m2&&SHOP[m2[1]])return SHOP[m2[1]];
   for(var i=0;i<KW.length;i++)if(s.indexOf(KW[i][0])>=0)return KW[i][1];return''}
@@ -149,7 +149,8 @@ fetch(API+'?api=1&k='+encodeURIComponent(K)).then(function(r){return r.json()}).
     var dno=String(r[11]||'').trim(),bill=r[4]||'',po=r[2]||'';if(!dno&&!bill&&!po)return;
     var key=dno||(po+'|'+bill),o=map[key];
     if(!o){var addr=dict[r[5]]||'',prov=r[8]<0?'':dict[r[8]];
-      if(!prov||/^Tỉnh lộ/i.test(prov))prov=provFromKho(addr);
+      var pk=provFromKho(addr);if(pk)prov=pk;else if(/^Tỉnh lộ/i.test(prov))prov='';
+      if(!prov&&bill&&B[bill]&&B[bill][3])prov=B[bill][3];  // DO chưa có tỉnh: lấy tỉnh nhận của bill (Sheet 3 cột K)
       o=map[key]={do:dno,bill:bill,po:po,b:pd(r[0]),p:pd(r[1]),kho:addr.replace(/^\d+\s*-?\s*/,''),prov:prov,n:0};}
     o.n++;if(!o.p&&r[1])o.p=pd(r[1]);if(!o.bill&&bill)o.bill=bill;
   });
