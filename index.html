@@ -145,6 +145,7 @@ ul.gaps{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:
     </div>
     <div class="sub" id="snap"></div>
   </header>
+  <nav id="tools" style="display:none;margin-top:12px;gap:8px;flex-wrap:wrap;align-items:center"><span class="sub" style="font-weight:600">Công cụ nội bộ:</span></nav>
 
   <div class="bar">
     <div class="chips"><select id="nccSel" class="btn" style="display:none" aria-label="Chọn NCC"></select><div class="chips" id="chips"><span class="sub">Kỳ báo cáo:</span></div></div>
@@ -588,6 +589,10 @@ $('cBand').addEventListener('input',e=>setUI('band',e.target.value));
 // Về mặc định: bỏ phần tự chỉnh, quay về giao diện Kho vận đã chọn
 $('cReset').addEventListener('click',()=>{own={};ui=Object.assign({},THEME);applyUI(true)});
 // Chỉ link Tất cả NCC (nội bộ) mới có nút lưu giao diện cho khách
+// Thanh công cụ nội bộ: chỉ hiện trên link "Tất cả NCC"
+if(MULTI&&window.TOKEN){const tk=encodeURIComponent(window.TOKEN),base=location.origin+location.pathname.replace(/[^/]*$/,''),nav=$('tools');
+  [['⚠ Cảnh báo giao hàng trễ','canhbao/?a='+tk],['⬆ Nhập chứng từ vận chuyển','quantri/?a='+tk],['🔎 Tra cứu đơn hàng','tracuu/?k='+tk]].forEach(x=>{const a=document.createElement('a');a.className='btn';a.href=base+x[1];a.target='_blank';a.rel='noopener';a.textContent=x[0];a.style.textDecoration='none';nav.appendChild(a)});
+  nav.style.display='flex'}
 if(MULTI&&window.API&&window.TOKEN){$('cSave').style.display='';$('cNote').style.display='';
   $('cSave').addEventListener('click',()=>{
     const t={};['font','size','bg','ac','tile','card','c1','c2','band'].forEach(k=>{if(ui[k]!=null&&ui[k]!=='')t[k]=ui[k]});
