@@ -25,7 +25,7 @@ function doGet(e) {
   var token = String((e && e.parameter && e.parameter.k) || '').trim();
   // Lưu giao diện mặc định cho khách: chỉ nhận từ mã link "Tất cả NCC" (nội bộ)
   if (e && e.parameter && e.parameter.theme != null) {
-    var res = saveTheme_(token, e.parameter.theme);
+    var res = saveTheme_(token, e.parameter.theme, String(e.parameter.scope || ''));
     return ContentService.createTextOutput(JSON.stringify(res)).setMimeType(ContentService.MimeType.JSON);
   }
   // Tra hành trình vận đơn trực tiếp từ logisticpartner.thegioididong.com (chỉ bill thuộc NCC của link)
@@ -519,23 +519,28 @@ function fillKtt_() {
 }
 
 /* ---------- Giao diện mặc định cho khách (màu, font) ---------- */
-function saveTheme_(token, raw) {
+function saveTheme_(token, raw, scope) {
   if (tokenMap_()[token] !== ALL_NAME) return { ok: false, error: 'Chỉ link Tất cả NCC mới được đổi giao diện cho khách.' };
   var t;
   try { t = JSON.parse(raw || '{}'); } catch (err) { return { ok: false, error: 'Dữ liệu giao diện không hợp lệ.' }; }
   var out = {}, hex = /^#[0-9a-fA-F]{6}$/;
-  ['bg', 'ac', 'tile', 'card', 'c1', 'c2', 'band'].forEach(function (k) { if (hex.test(t[k] || '')) out[k] = t[k]; });
+  ['bg', 'ac', 'tile', 'card', 'c1', 'c2', 'band', 'ok', 'bad', 'wait'].forEach(function (k) { if (hex.test(t[k] || '')) out[k] = t[k]; });
   if (+t.size >= 12 && +t.size <= 20) out.size = +t.size;
   if (typeof t.font === 'string' && t.font.length < 120 && !/[<>{};]/.test(t.font)) out.font = t.font;
-  PropertiesService.getScriptProperties().setProperty('THEME', JSON.stringify(out));
-  return { ok: true, theme: out };
+  // scope=karofi: giao diện riêng của trang báo cáo KAROFI, không ảnh hưởng link các NCC khác
+  var key = scope === 'karofi' ? 'THEME_KAROFI' : 'THEME';
+  if (t.reset) PropertiesService.getScriptProperties().deleteProperty(key);
+  else PropertiesService.getScriptProperties().setProperty(key, JSON.stringify(out));
+  return { ok: true, theme: t.reset ? {} : out };
 }
 
 /** Gắn giao diện mặc định vào data trả cho trang (không cần dựng lại data). */
 function withTheme_(json) {
-  var t = PropertiesService.getScriptProperties().getProperty('THEME');
-  if (!t || !json || json.charAt(json.length - 1) !== '}' || json.indexOf('{"error"') === 0) return json;
-  return json.slice(0, -1) + ',"THEME":' + t + '}';
+  if (!json || json.charAt(json.length - 1) !== '}' || json.indexOf('{"error"') === 0) return json;
+  var P = PropertiesService.getScriptProperties(), t = P.getProperty('THEME'), tk = P.getProperty('THEME_KAROFI'), add = '';
+  if (t) add += ',"THEME":' + t;
+  if (tk) add += ',"THEME_K":' + tk;
+  return add ? json.slice(0, -1) + add + '}' : json;
 }
 
 /* ---------- Tra cứu vận đơn trực tiếp (logisticpartner.thegioididong.com) ---------- */
