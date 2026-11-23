@@ -251,6 +251,8 @@ if(!RETANY){$('kpis').classList.add('four');$('fRet').style.display='none'}
 const SG={done:'Hoàn tất giao hàng',way:'Đang giao hàng',ret:'Hoàn bill',cancel:'Huỷ không giao',na:'Chưa có dữ liệu'};
 const sgrp=b=>{if(!b)return'na';if(deliv(b))return'done';const s=(BILLS[b]&&BILLS[b][0])||'';return /^6/.test(s)?'ret':/^5|^FBC/i.test(s)?'done':isCancel(s)?'cancel':s?'way':'na'};
 // Rule 9.2: "5 - Hoàn tất giao hàng" và "FBC - Đã Trả Hàng" tính là đã giao; "Huỷ" xếp chung mục hoàn bill/huỷ
+// Tạm thời (23/11/2026): chứng từ chưa có dữ liệu trạng thái tính là Hoàn tất giao hàng ở phần trạng thái
+const sgrpS=b=>{const g=sgrp(b);return b&&g==='na'?'done':g};
 const lgrp=r=>{const g=sgrp(r.bill);return g==='done'?g:g==='ret'||g==='cancel'?'ret':'und'};
 const LATE=['Giao trễ','Đúng hạn','Chưa giao, đã quá hạn','Chưa giao, còn hạn','Không xác định'];
 
@@ -324,7 +326,7 @@ function liveHTML(b){
   const r=LC[b];
   if(!r)return`<button class="btn" data-track="${esc(b)}">Xem hành trình vận đơn ▾</button>`;
   if(r==='wait')return'<div class="sub">Đang tra cứu hành trình…</div>';
-  if(!r.ok)return`<div class="sub">Chưa tra được trực tiếp lúc này (${esc(r.error||'lỗi')}). Trạng thái theo dữ liệu báo cáo: ${SG[sgrp(b)]}. <button class="btn" data-track="${esc(b)}">Thử lại</button></div>`;
+  if(!r.ok)return`<div class="sub">Chưa tra được trực tiếp lúc này (${esc(r.error||'lỗi')}). Trạng thái theo dữ liệu báo cáo: ${SG[sgrpS(b)]}. <button class="btn" data-track="${esc(b)}">Thử lại</button></div>`;
   if(!r.events.length)return'<div class="sub">Hệ thống vận chuyển chưa có hành trình cho bill này.</div>';
   const ev=r.events.slice().reverse(),f=t=>{const m=/(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/.exec(t);return m?`${m[4]}:${m[5]} ${m[3]}/${m[2]}/${m[1]}`:t};
   return`<div class="eyebrow">Hành trình vận đơn · trực tiếp từ hệ thống vận chuyển · tra lúc ${esc(r.at)}</div>
@@ -341,7 +343,7 @@ function liveLoad(bills){
 function paintLive(){document.querySelectorAll('[data-live]').forEach(el=>{el.innerHTML=liveHTML(el.dataset.live)})}
 function poCard(o){
   const late=o.lres===LATE[0]?`Giao trễ ${o.ldays} ngày`:o.lres===LATE[2]?`Chưa giao, quá hạn ${o.ldays} ngày`:o.lres;
-  const docs=[...o.bills].map(b=>{const g=sgrp(b);return`<div class="doc"><div class="eyebrow">Chứng từ vận chuyển</div><div class="docno">${esc(b)}</div>
+  const docs=[...o.bills].map(b=>{const g=sgrpS(b);return`<div class="doc"><div class="eyebrow">Chứng từ vận chuyển</div><div class="docno">${esc(b)}</div>
     <div><span class="pill ${SPILL[g]}">${SG[g]}</span></div><div class="sub">Ngày hoàn tất giao: ${esc(deliv(b)||'chưa có')}${hasRet(o.ncc)?' · Trả chứng từ: '+retTxt(ret(b)):''}</div>${LIVE?`<div class="live" data-live="${esc(b)}">${liveHTML(b)}</div>`:''}</div>`}).join('')
     ||'<div class="doc"><div class="eyebrow">Chứng từ vận chuyển</div><div class="sub">PO này chưa có mã bill.</div></div>';
   return`<div class="pocard"><div><b>PO ${esc(o.po)}</b>${MULTI?' · '+esc(o.ncc):''} ${MULTI?`<span class="pill cnt">${esc(late)}</span>`:''}</div>
@@ -459,11 +461,11 @@ function renderChart(){
   $('chart').innerHTML=D.O.length?s+'</svg>':'<div class="empty">Không có PO booking trong kỳ.</div>';
 }
 function renderProv(){
-  const c={done:0,way:0,ret:0,cancel:0,na:0};D.B.forEach(d=>c[sgrp(d.bill)]++);
+  const c={done:0,way:0,ret:0,cancel:0,na:0};D.B.forEach(d=>c[sgrpS(d.bill)]++);
   const keys=['done','way','ret'].concat(c.cancel?['cancel']:[],c.na?['na']:[]),mx=Math.max(1,...keys.map(k=>c[k]));
   $('prov').innerHTML=keys.map(k=>`<button class="prow" data-s="${k}" aria-expanded="${state.sopen===k}"><span>${SG[k]}</span><span class="ptrack"><i style="width:${c[k]/mx*100}%"></i></span><b>${c[k]}</b></button>`).join('');
   const el=$('sPanel');if(!state.sopen||keys.indexOf(state.sopen)<0){el.classList.remove('open');el.innerHTML='';return}
-  const rows=D.B.filter(d=>sgrp(d.bill)===state.sopen);window._SR=rows;
+  const rows=D.B.filter(d=>sgrpS(d.bill)===state.sopen);window._SR=rows;
   el.classList.add('open');el.innerHTML=`<div class="phead"><h2>Chứng từ ${SG[state.sopen].toLowerCase()} (${rows.length})</h2><button class="btn primary" id="expS">Xuất Excel</button></div>${tableHTML(C.bill,rows,'Không có chứng từ ở trạng thái này trong kỳ.')}`;
 }
 
